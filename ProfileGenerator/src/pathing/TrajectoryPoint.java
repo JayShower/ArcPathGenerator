@@ -1,3 +1,4 @@
+package pathing;
 public class TrajectoryPoint {
 
 	public final double position;

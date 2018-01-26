@@ -1,9 +1,2 @@
-/Path.class
-/ProfileGenerator.class
-/TrajectoryPoint.class
-/Waypoint.class
-/Arc.class
-/Test.class
-/Slope.class
-/Utils.class
-/Point.class
+/pathing/
+/math/
