@@ -32,13 +32,12 @@ public abstract class PathSegment {
 	 * @return the velocity in units/second at that time
 	 */
 	public abstract double velocityAtTime(double t);
-	
+
 	/**
-	 * @param t the time in seconds after the start of this segment
+	 * @param t
+	 *            the time in seconds after the start of this segment
 	 * @return the velocity in units/second at that time
 	 */
 	public abstract double positionAtTime(double t);
-	
-	}
 
 }
