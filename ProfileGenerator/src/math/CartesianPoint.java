@@ -1,5 +1,8 @@
 package math;
+
 public class CartesianPoint {
+
+	public static final CartesianPoint origin = new CartesianPoint(0, 0);
 
 	public final double x;
 	public final double y;
@@ -19,6 +22,14 @@ public class CartesianPoint {
 
 	public static double getDistance(double dx, double dy) {
 		return Math.sqrt(dx * dx + dy * dy);
+	}
+
+	public CartesianPoint shift(double dx, double dy) {
+		return new CartesianPoint(x + dx, y + dy);
+	}
+
+	public CartesianPoint shift(Vector v) {
+		return new CartesianPoint(x + v.x, y + v.y);
 	}
 
 }
