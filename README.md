@@ -4,6 +4,8 @@
 
 Feel free to add issues, make pull requests, etc.
 
+Here is a bezier curve grapher I made on desmos: https://www.desmos.com/calculator/yqp5o2r1jv
+
 This project uses...
 
 -code from team 254 (mostly the trapezoidal motion stuff): https://github.com/Team254/FRC-2017-Public
