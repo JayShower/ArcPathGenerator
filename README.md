@@ -1,4 +1,6 @@
-# ArcPathGenerator
+# BezierPathGenerator
+
+
 
 This project uses...
 
@@ -18,4 +20,4 @@ Other notes:
 
 -I would like to eventually include ideas from this paper: https://www.researchgate.net/publication/221592023_G3_Transition_Curve_Between_Two_Straight_Lines
 
--^ that would be neat to do that. If someone wants to work with me on that, that would be great.
+^ it would be neat to do that. If someone wants to work with me on that, that would be great. I have a general idea of what's going on in that paper (connect two monotonically increasing in curvature bezier curves with an arc) but have no idea how I would go about implementing that.
