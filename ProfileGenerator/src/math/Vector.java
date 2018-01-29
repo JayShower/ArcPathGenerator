@@ -52,7 +52,7 @@ public class Vector {
 	}
 
 	public Vector multiply(Vector other) {
-		return new Vector(x*other.x, y * other.y;
+		return new Vector(x * other.x, y * other.y);
 	}
 
 	/**
