@@ -4,6 +4,8 @@
 
 Feel free to add issues, make pull requests, etc.
 
+This project is a path generator that uses bezier curves.
+
 Here is a bezier curve grapher I made on desmos: https://www.desmos.com/calculator/yqp5o2r1jv
 
 This project uses...
