@@ -2,6 +2,8 @@
 
 
 
+Feel free to add issues, make pull requests, etc.
+
 This project uses...
 
 -code from team 254 (mostly the trapezoidal motion stuff): https://github.com/Team254/FRC-2017-Public
