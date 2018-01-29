@@ -12,9 +12,9 @@ This project uses...
 
 -code from team 254 (mostly the trapezoidal motion stuff): https://github.com/Team254/FRC-2017-Public
 
--ideas from this primer on BezierCurves: https://pomax.github.io/bezierinfo/#arclength
+-ideas from this primer on BezierCurves: https://pomax.github.io/bezierinfo/
 
--guass quadrature integral approximation: https://pomax.github.io/bezierinfo/legendre-gauss.html#n64
+-guass quadrature integral approximation: https://pomax.github.io/bezierinfo/legendre-gauss.html
 
 -the Falcon Path Planner graphing utility to graph paths, because I came across that when researching and it is easy to use. Falcon Path Planner: https://github.com/KHEngineering/SmoothPathPlanner
 
