@@ -6,15 +6,17 @@ Feel free to add issues, make pull requests, etc.
 
 This project is a path generator that uses bezier curves.
 
-Here is a bezier curve grapher I made on desmos: https://www.desmos.com/calculator/yqp5o2r1jv
+See the code for example usage.
+
+Here is a bezier curve grapher I made on desmos: https://www.desmos.com/calculator/6wdn5jhl7m
 
 This project uses...
 
 -code from team 254 (mostly the trapezoidal motion stuff): https://github.com/Team254/FRC-2017-Public
 
--ideas from this primer on BezierCurves: https://pomax.github.io/bezierinfo/#arclength
+-ideas from this primer on BezierCurves: https://pomax.github.io/bezierinfo/
 
--guass quadrature integral approximation: https://pomax.github.io/bezierinfo/legendre-gauss.html#n64
+-guass quadrature integral approximation: https://pomax.github.io/bezierinfo/legendre-gauss.html
 
 -the Falcon Path Planner graphing utility to graph paths, because I came across that when researching and it is easy to use. Falcon Path Planner: https://github.com/KHEngineering/SmoothPathPlanner
 
