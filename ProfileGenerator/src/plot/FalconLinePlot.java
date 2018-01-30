@@ -295,6 +295,17 @@ public class FalconLinePlot extends JPanel implements ClipboardOwner {
 		link.add(Data);
 	}
 
+	private boolean customMinMax = false;
+
+	public void setMaxMin(double xMin, double xMax, double yMin, double yMax) {
+		this.yMax = yMax;
+		this.yMin = yMin;
+		this.xMax = xMax;
+		this.xMin = xMin;
+		customMinMax = true;
+
+	}
+
 	/**
 	 * Main method which paints the panel and shows the figure.
 	 * 
@@ -315,7 +326,8 @@ public class FalconLinePlot extends JPanel implements ClipboardOwner {
 		g2.draw(xaxis);
 
 		// find Max Y limits
-		getMinMax(link);
+		if (!customMinMax)
+			getMinMax(link);
 
 		// draw ticks
 		drawYTickRange(g2, yaxis, 15, yMax, yMin);

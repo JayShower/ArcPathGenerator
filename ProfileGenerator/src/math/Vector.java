@@ -5,17 +5,21 @@ public class Vector {
 	public static final Vector ZERO = new Vector(0, 0);
 
 	public final double x, y;
+	public final double magnitude;
 
 	public Vector(double x, double y) {
 		this.x = x;
 		this.y = y;
+		this.magnitude = magnitude();
 	}
 
-	public Vector(CartesianPoint end) {
-		this(end.x - CartesianPoint.origin.x, end.y - CartesianPoint.origin.y);
+	public Vector(double angle) {
+		this.x = Math.cos(angle);
+		this.y = Math.sin(angle);
+		this.magnitude = magnitude();
 	}
 
-	public Vector(CartesianPoint start, CartesianPoint end) {
+	public Vector(Vector start, Vector end) {
 		this(end.x - start.x, end.y - start.y);
 	}
 
@@ -27,12 +31,24 @@ public class Vector {
 		return dotProduct(this);
 	}
 
-	public double magnitude() {
+	private double magnitude() {
 		return Math.sqrt(magnitudeSquared());
 	}
 
+	public double cosine() {
+		return x / magnitude;
+	}
+
+	public double slope() {
+		return y / x;
+	}
+
+	public double sine() {
+		return y / magnitude;
+	}
+
 	public Vector normalized() {
-		return new Vector(x / magnitude(), y / magnitude());
+		return new Vector(x / magnitude, y / magnitude);
 	}
 
 	public Vector scale(double scale) {
@@ -47,12 +63,20 @@ public class Vector {
 		return new Vector(x + other.x, y + other.y);
 	}
 
+	public Vector subtract(Vector other) {
+		return new Vector(x - other.x, y - other.y);
+	}
+
 	public Vector invert() {
 		return new Vector(1 / x, 1 / y);
 	}
 
 	public Vector multiply(Vector other) {
 		return new Vector(x * other.x, y * other.y);
+	}
+
+	public Vector divide(Vector other) {
+		return new Vector(x / other.x, y / other.y);
 	}
 
 	/**
@@ -65,8 +89,8 @@ public class Vector {
 	 * @return rotated vector
 	 */
 	public Vector rotate(double angle) {
-		double newX = x * Math.cos(angle) - Math.sin(angle);
-		double newY = x * Math.sin(angle) + Math.cos(angle);
+		double newX = x * Math.cos(angle) - y * Math.sin(angle);
+		double newY = x * Math.sin(angle) + y * Math.cos(angle);
 		return new Vector(newX, newY);
 	}
 
@@ -75,7 +99,24 @@ public class Vector {
 		if (!(other instanceof Vector))
 			return false;
 		Vector v = (Vector) other;
-		return x == v.x && y == v.y;
+		return positionIsEqual(v);
+	}
+
+	@Override
+	public String toString() {
+		return String.format("%.2f, %.2f", x, y);
+	}
+
+	public static final double headingE = 1.0e-9;
+
+	public boolean headingIsEqual(Vector other) {
+		return Util.equals(sine(), other.sine(), headingE) && Util.equals(cosine(), other.cosine(), headingE);
+	}
+
+	public static final double positionE = 1.0e-9;
+
+	public boolean positionIsEqual(Vector other) {
+		return Util.equals(x, other.x, positionE) && Util.equals(y, other.y, positionE);
 	}
 
 }

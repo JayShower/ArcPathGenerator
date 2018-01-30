@@ -51,12 +51,11 @@ public class Util {
 	 *            number of rectangles to use, at most 64
 	 * @return the approximate integral
 	 */
-	public static double gaussQuadIntegrate(Function<Double, Double> function, double lower, double upper,
-			int rectangles) {
+	public static double gaussQuadIntegrate(Function<Double, Double> function, double lower, double upper) {
 		if (upper - lower == 0)
 			return 0;
 		double sum = 0;
-		for (int i = 0; i < rectangles; i++) {
+		for (int i = 0; i < gaussQuad.length; i++) {
 			double input = (upper - lower) * gaussQuad[i][1] / 2 + (upper + lower) / 2;
 			sum += gaussQuad[i][0] * function.apply(input);
 		}
@@ -71,60 +70,16 @@ public class Util {
 		return d;
 	}
 
-	public static int LUTinterpolationSearch(double value, double[] LUT) {
-		if (value < LUT[0]) {
-			return 0;
-		}
-		if (value > LUT[LUT.length - 1]) {
-			return LUT.length - 1;
-		}
-
-		int lo = 0;
-		int hi = LUT.length - 1;
-		int mid;
-
-		// while (LUT[lo] != LUT[hi] && value >= LUT[lo] && value <= LUT[hi]) {
-		while (lo <= hi) {
-			double slope = (LUT[hi] - LUT[lo]) / (hi - lo);
-			mid = (int) ((value - LUT[lo]) / slope + lo);
-
-			if (value < LUT[mid]) {
-				hi = mid - 1;
-			} else if (value > LUT[mid]) {
-				lo = mid + 1;
-			} else {
-				return mid;
-			}
-		}
-		// lo == hi + 1
-		return (LUT[lo] - value) < (value - LUT[hi]) ? lo : hi;
+	public static boolean equals(double v1, double v2, double epsilon) {
+		return Math.abs(v1 - v2) < epsilon;
 	}
 
-	public static int LUTbinarySearch(double value, double[] LUT) {
+	public static double linearInterpolate(double x0, double y0, double x1, double y1, double x) {
+		double slope = (y1 - y0) / (x1 - x0);
+		return slope * (x - x0) + y0;
+	}
 
-		if (value < LUT[0]) {
-			return 0;
-		}
-		if (value > LUT[LUT.length - 1]) {
-			return LUT.length - 1;
-		}
-
-		int lo = 0;
-		int hi = LUT.length - 1;
-		int mid;
-
-		while (lo <= hi) {
-			mid = (hi + lo) / 2;
-
-			if (value < LUT[mid]) {
-				hi = mid - 1;
-			} else if (value > LUT[mid]) {
-				lo = mid + 1;
-			} else {
-				return mid;
-			}
-		}
-		// lo == hi + 1
-		return (LUT[lo] - value) < (value - LUT[hi]) ? lo : hi;
+	public static double curvature2d(double x1, double x2, double y1, double y2) {
+		return (x1 * y2 - y1 * x2) / Math.pow(x1 * x1 + y1 * y1, 1.5);
 	}
 }

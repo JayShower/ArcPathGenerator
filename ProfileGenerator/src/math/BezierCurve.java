@@ -1,14 +1,11 @@
-package bezier;
+package math;
 
-import math.Util;
-import math.Vector;
-
-public class BezierCurve {
+public class BezierCurve extends Curve {
 
 	private static final int[][] BINOMIAL = { { 1 }, { 1, 1 }, { 1, 2, 1 }, { 1, 3, 3, 1 }, { 1, 4, 6, 4, 1 },
 			{ 1, 5, 10, 10, 5, 1 }, { 1, 6, 15, 20, 15, 6, 1 } };
 
-	private final Vector[] controlPoints;
+	public final Vector[] controlPoints;
 	private final int n;
 	public final BezierCurve derivative;
 
@@ -18,7 +15,7 @@ public class BezierCurve {
 	 * @param controlPoints
 	 *            the control points to use. must be at least 2, and no more than 7.
 	 */
-	public BezierCurve(Vector[] controlPoints) {
+	public BezierCurve(Vector... controlPoints) {
 		this.controlPoints = controlPoints;
 		this.n = controlPoints.length - 1;
 		this.derivative = calculateDerivative();
@@ -29,12 +26,12 @@ public class BezierCurve {
 			return null;
 		Vector[] newPoints = new Vector[controlPoints.length - 1];
 		for (int i = 0; i < newPoints.length; i++) {
-			newPoints[i] = controlPoints[i + 1].add(controlPoints[i].negate()).scale(newPoints.length);
+			newPoints[i] = controlPoints[i + 1].subtract(controlPoints[i]).scale(newPoints.length);
 		}
 		return new BezierCurve(newPoints); // warning, recursive
 	}
 
-	public Vector bezier(double t) {
+	private Vector bezier(double t) {
 		Vector point = Vector.ZERO;
 		double mt = 1 - t;
 		for (int k = 0; k <= n; k++) {
@@ -44,7 +41,7 @@ public class BezierCurve {
 		return point;
 	}
 
-	public double bezierX(double t) {
+	private double bezierX(double t) {
 		double result = 0;
 		double mt = 1 - t;
 		for (int k = 0; k <= n; k++) {
@@ -54,7 +51,7 @@ public class BezierCurve {
 		return result;
 	}
 
-	public double bezierY(double t) {
+	private double bezierY(double t) {
 		double result = 0;
 		double mt = 1 - t;
 		for (int k = 0; k <= n; k++) {
@@ -75,7 +72,9 @@ public class BezierCurve {
 			Vector[] newPoints = new Vector[points.length - 1];
 			for (int i = 0; i < newPoints.length; i++) {
 				double mt = 1 - t;
-				newPoints[i] = points[i].scale(mt).add(points[i + 1].scale(t));
+				double x = points[i].x * mt + points[i + 1].x * t;
+				double y = points[i].y * mt + points[i + 1].y * t;
+				newPoints[i] = new Vector(x, y);
 			}
 			return deCasteljau(newPoints, t);
 		}
@@ -108,6 +107,77 @@ public class BezierCurve {
 			}
 			return deCasteljauSingle(newPoints, t);
 		}
+	}
+
+	public Vector tangent(double t) {
+		return derivative.bezier(t);
+	}
+
+	public Vector leftNormal(double t) {
+		return tangent(t).rotate(Math.PI / 2);
+	}
+
+	public Vector rightNormal(double t) {
+		return tangent(t).rotate(-Math.PI / 2);
+	}
+
+	public double arcLengthDerivative(double t) {
+		return derivative.deCasteljau(t).magnitude;
+	}
+
+	public double arcLengthIntegral(double t) {
+		return Util.gaussQuadIntegrate(this::arcLengthDerivative, 0, t);
+	}
+
+	private LookupTable tToArcLengthTable = null;
+
+	private void createTToArcLengthTable() {
+		tToArcLengthTable = new LookupTable(this::arcLengthIntegral, 0, 1);
+	}
+
+	public LookupTable tToArcLengthTable() {
+		if (tToArcLengthTable == null)
+			createTToArcLengthTable();
+		return tToArcLengthTable;
+	}
+
+	@Override
+	public double getTotalArcLength() {
+		if (tToArcLengthTable == null)
+			createTToArcLengthTable();
+		return tToArcLengthTable.getOutput(1);
+	}
+
+	public double getArcLength(double t) {
+		if (tToArcLengthTable == null)
+			createTToArcLengthTable();
+		return tToArcLengthTable.getOutput(t);
+	}
+
+	public double tFromArcLength(double arcLength) {
+		if (tToArcLengthTable == null)
+			createTToArcLengthTable();
+		return tToArcLengthTable.getInput(arcLength);
+	}
+
+	public double curvature(double t) {
+		Vector d1 = derivative.deCasteljau(t);
+		Vector d2 = derivative.derivative.deCasteljau(t);
+		return Util.curvature2d(d1.x, d2.x, d1.y, d2.y);
+	}
+
+	@Override
+	public double getCurvatureAtArcLength(double arcLength) {
+		return curvature(tFromArcLength(arcLength));
+	}
+
+	@Override
+	public String toString() {
+		String result = "";
+		for (int i = 0; i < controlPoints.length; i++) {
+			result += controlPoints[i].toString() + " | ";
+		}
+		return result;
 	}
 
 	// public BezierCurve[] split(double... t) {
@@ -146,18 +216,6 @@ public class BezierCurve {
 	// deCasteljauSplit(newPoints, before, after, t, level + 1, length);
 	// }
 	// }
-
-	public Vector tangent(double t) {
-		return derivative.bezier(t);
-	}
-
-	public Vector leftNormal(double t) {
-		return tangent(t).rotate(Math.PI / 2);
-	}
-
-	public Vector rightNormal(double t) {
-		return tangent(t).rotate(-Math.PI / 2);
-	}
 
 	// public HashSet<Double>[] criticalPoints(int numberSteps) {
 	// int possibleRoots = controlPoints.length - 1;
@@ -247,49 +305,5 @@ public class BezierCurve {
 	// }
 	// return maxima;
 	// }
-
-	private double arcLengthDerivative(double t) {
-		Vector d = derivative.deCasteljau(t);
-		return d.magnitude();
-	}
-
-	public int DISTANCE_TO_T_LUT_RESOLUTION = 5000;
-	private double INDEX_PER_T = (DISTANCE_TO_T_LUT_RESOLUTION - 1);
-	private final double[] distanceToTLUT = new double[DISTANCE_TO_T_LUT_RESOLUTION];
-	private boolean isLUTmade = false;
-
-	public void setLUTResolution(int n) {
-		DISTANCE_TO_T_LUT_RESOLUTION = n;
-		INDEX_PER_T = n - 1;
-	}
-
-	public double getDistance(double t) {
-		if (!isLUTmade) {
-			createLUT();
-		}
-		return distanceToTLUT[(int) (t * INDEX_PER_T)];
-	}
-
-	public double distanceToT(double distance) {
-		if (!isLUTmade) {
-			createLUT();
-		}
-		int index = Util.LUTinterpolationSearch(distance, distanceToTLUT);
-		return index / INDEX_PER_T;
-	}
-
-	private void createLUT() {
-		distanceToTLUT[0] = 0;
-		for (int i = 1; i < DISTANCE_TO_T_LUT_RESOLUTION; i++) {
-			distanceToTLUT[i] = distanceToTLUT[i - 1] + Util.gaussQuadIntegrate(this::arcLengthDerivative,
-					(i - 1) / (INDEX_PER_T), i / (INDEX_PER_T), 64);
-		}
-	}
-
-	public double curvature(double t) {
-		Vector d1 = derivative.deCasteljau(t);
-		Vector d2 = derivative.derivative.deCasteljau(t);
-		return d1.x * d2.y - d1.y * d2.x;
-	}
 
 }

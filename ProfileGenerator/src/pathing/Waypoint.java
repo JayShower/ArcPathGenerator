@@ -1,10 +1,10 @@
 package pathing;
 
-import math.CartesianPoint;
+import math.Vector;
 
-public class Waypoint extends CartesianPoint {
+public class Waypoint extends Vector {
 
-	public final double heading;
+	public final Vector heading;
 
 	public final double absVelocity;
 
@@ -17,22 +17,20 @@ public class Waypoint extends CartesianPoint {
 	 *            positive x is towards right of robot, positive y is forwards <br>
 	 * @param heading
 	 *            way front of robot is facing, in radians. Positve angle is upwards
-	 *            from x axis
+	 *            from x axis. Must be between 0 and 2pi
 	 * @param absVelocity
 	 *            absVelocity of the robot as it drives through this waypoint
 	 */
 	public Waypoint(double x, double y, double heading, double absVelocity) {
 		super(x, y);
-		this.heading = adjustHeading(heading);
+		this.heading = new Vector(heading);
 		this.absVelocity = absVelocity;
 	}
 
-	private static double adjustHeading(double heading) {
-		heading = heading % 360;
-		if (Math.abs(heading) > 180) {
-			heading = heading - Math.signum(heading) * 360;
-		}
-		return heading;
+	public Waypoint(double x, double y, Vector heading, double absVelocity) {
+		super(x, y);
+		this.heading = heading;
+		this.absVelocity = absVelocity;
 	}
 
 }
