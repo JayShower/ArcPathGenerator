@@ -1,6 +1,6 @@
 package math;
 
-import pathing.Waypoint;
+import pathing.WayPoint;
 
 public class DirectedLine extends Curve {
 
@@ -12,7 +12,7 @@ public class DirectedLine extends Curve {
 		this.end = end;
 	}
 
-	public DirectedLine(Waypoint w) {
+	public DirectedLine(WayPoint w) {
 		this(w, w.add(w.heading));
 	}
 

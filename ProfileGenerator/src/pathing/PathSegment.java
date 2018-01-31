@@ -1,19 +1,20 @@
 package pathing;
 
 import math.Curve;
+import math.Vector;
 
 public class PathSegment {
 
-	public final Waypoint start;
-	public final Waypoint end;
+	public final Vector start;
+	public final Vector end;
 	public final Curve curve;
-	public final double startPosition;
+	public final double absVelocity;
 
-	public PathSegment(Waypoint start, Waypoint end, double startPosition, Curve curve) {
+	public PathSegment(Vector start, Vector end, double absVelocity, Curve curve) {
 		this.start = start;
 		this.end = end;
 		this.curve = curve;
-		this.startPosition = startPosition;
+		this.absVelocity = absVelocity;
 	}
 
 }

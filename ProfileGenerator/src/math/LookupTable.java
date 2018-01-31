@@ -31,7 +31,7 @@ public class LookupTable {
 
 	public void setResolution(int resolution) {
 		this.resolution = resolution;
-		this.increment = range / (resolution - 1);
+		this.increment = range / ((double) resolution - 1);
 		// System.out.println("Resolution, increment: ");
 		// System.out.println(resolution);
 		// System.out.println(increment);
@@ -61,7 +61,7 @@ public class LookupTable {
 	}
 
 	private int inputToIndex(double input) {
-		return (int) ((input - lowerInput) / increment);
+		return (int) Math.round((input - lowerInput) / increment);
 	}
 
 	public double getOutput(double input) {
@@ -73,7 +73,7 @@ public class LookupTable {
 		double lowerInput = indexToInput(lowerIndex);
 		double lowerOutput = table[lowerIndex];
 		int upperIndex = lowerIndex + 1;
-		double upperInput = inputToIndex(upperIndex);
+		double upperInput = indexToInput(upperIndex);
 		double upperOutput = table[upperIndex];
 		double result = Util.linearInterpolate(lowerInput, lowerOutput, upperInput, upperOutput, input);
 		/*
@@ -86,7 +86,7 @@ public class LookupTable {
 	}
 
 	public double getInput(double output) {
-		int lowerIndex = linearSearch(output);
+		int lowerIndex = binarySearch(output);
 		if (lowerIndex == resolution - 1)
 			return indexToInput(lowerIndex);
 		double lowerInput = indexToInput(lowerIndex);
@@ -121,20 +121,17 @@ public class LookupTable {
 		int hi = table.length - 1;
 		int mid;
 
-		while (lo <= hi) {
+		while (lo < hi) {
 			mid = (hi + lo) / 2;
-
 			if (value < table[mid]) {
 				hi = mid - 1;
-			} else if (value > table[mid] && lo != mid) {
-				lo = mid + 1;
-			} else {
+			} else if (value > table[mid] && value < table[mid + 1])
 				return mid;
+			else {
+				lo = mid + 1;
 			}
 		}
-		// lo == hi + 1
-		// System.out.println("Got to weird spot, check this");
-		return (table[lo] - value) < (value - table[hi]) ? lo : hi;
+		return lo;
 	}
 
 	private boolean isIncreasing() {

@@ -5,14 +5,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import pathing.PathCreation;
-import pathing.Waypoint;
+import pathing.WayPoint;
 import plot.FalconLinePlot;
 
 public class Test {
 
 	public static void test() {
-		Waypoint first = new Waypoint(0, 0, Math.PI / 2, 0);
-		Waypoint last = new Waypoint(50, 50, 0, 0);
+		WayPoint first = new WayPoint(0, 0, Math.PI / 2);
+		WayPoint last = new WayPoint(100, 100, 0);
 		Timer timer = new Timer();
 		timer.reset();
 		BezierCurve curve = PathCreation.connectWaypointsWithBezier(first, last, 0.5);
@@ -29,11 +29,13 @@ public class Test {
 		// System.out.println(lut.getOutput(2.5));
 		// graphControlPoints(curve);
 		// testBezierSpeed(curve);
-		testdeCasteljauSpeed(curve);
-		// graphDeCasteljau(curve);
-		testArcLengthSpeed(curve);
-		// graphCurvature(curve);
-		// testLUTinvertibility(curve);
+		// testdeCasteljauSpeed(curve);
+		graphDeCasteljau(curve);
+		// testArcLengthSpeed(curve);
+		graphCurvature(curve);
+		// testInterpolation();
+		// testLUTinterpolation();
+		testLUTinvertibility(curve);
 	}
 
 	public static void graphControlPoints(BezierCurve curve) {
@@ -166,7 +168,7 @@ public class Test {
 		FalconLinePlot fig2 = new FalconLinePlot(distance, curvature, Color.blue, Color.green);
 		fig2.yGridOn();
 		fig2.xGridOn();
-		// fig2.setMaxMin(0, 100, -12000, 0);
+		fig2.setMaxMin(0, 200, -0.03, 0);
 		fig2.setYLabel("Curvature");
 		fig2.setXLabel("Distance");
 		fig2.setTitle("Curvature vs distance");
@@ -180,8 +182,29 @@ public class Test {
 		fig3.setTitle("Curvature vs t");
 	}
 
-	public static void testLUTinvertibility(BezierCurve curve) {
+	private static double inputOutput(double in) {
+		return 2 * in;
+	}
+
+	public static void testLUTinterpolation() {
+		double lower = 0;
+		double upper = 5;
 		int resolution = 1000;
+		double increment = (upper - lower) / (resolution - 1);
+		LookupTable lut = new LookupTable(Test::inputOutput, 0, increment * resolution);
+		for (int i = 0; i < resolution; i++) {
+			double t = i * increment;
+			double out = lut.getOutput(t);
+			double inCalc = lut.getInput(out);
+			System.out.println("t: " + t);
+			System.out.printf("\t%.10f, %.10f, %.10f, %n", t, inCalc, t - inCalc);
+			double realOut = inputOutput(t);
+			System.out.printf("\t%.10f, %.10f, %.10f, %n", realOut, out, realOut - out);
+		}
+	}
+
+	public static void testLUTinvertibility(BezierCurve curve) {
+		int resolution = 5000;
 		double increment = 1.0 / (resolution - 1);
 		double[] inputs = new double[resolution];
 		double[] distance = new double[resolution];
@@ -193,28 +216,14 @@ public class Test {
 			distance[i] = curve.getArcLength(t);
 			inputs2[i] = curve.tFromArcLength(distance[i]);
 			error[i] = inputs[i] - inputs2[i];
-			System.out.printf("%.4f, %.4f, %.4f, %.4f%n", inputs[i], inputs2[i], error[i], distance[i]);
+			// System.out.printf("%.12f, %.12f, %.12f, %.12f%n", inputs[i], inputs2[i],
+			// error[i], distance[i]);
 		}
+
 	}
 
 	public static void main(String[] args) {
 		test();
-	}
-
-	private static class Timer {
-		private long startTime = System.nanoTime();
-
-		public void reset() {
-			startTime = System.nanoTime();
-		}
-
-		public double elapsed() {
-			return (System.nanoTime() - startTime) / 1.0e6;
-		}
-
-		public void printElapsed(String message) {
-			System.out.println(message + elapsed());
-		}
 	}
 
 	public static double[][] convertToArray(List<Vector> v) {

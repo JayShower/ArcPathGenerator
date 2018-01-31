@@ -1,7 +1,10 @@
 package pathing;
 
+import java.awt.Color;
+
 import math.BezierCurve;
 import math.DirectedLine;
+import math.Timer;
 import math.Vector;
 import motion.GenerateMotionProfile;
 import motion.MotionProfile;
@@ -10,40 +13,101 @@ import motion.MotionProfileGoal;
 import motion.MotionProfileGoal.CompletionBehavior;
 import motion.MotionState;
 import pathing.Path.TrajectoryHolder;
+import plot.FalconLinePlot;
 import plot.Graphing;
 
 public class PathCreation {
 
 	public static void main(String[] args) {
-		// Waypoint first = new Waypoint(0, 0, Math.PI / 2, 0);
-		// Waypoint second = new Waypoint(0, 150, Math.PI / 2, 50);
-		// PathSegment straight = new PathSegment(first, second, 0, new
-		// DirectedLine(first, second));
+		System.loadLibrary("pathfinderjava");
+		Timer timer = new Timer();
+		timer.reset();
+		// Trajectory.Config config = new
+		// Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC,
+		// Trajectory.Config.SAMPLES_HIGH, 0.05, 1.7, 2.0, 60.0);
+		// Waypoint[] points = new Waypoint[] { new Waypoint(0, 0, Pathfinder.d2r(90)),
+		// new Waypoint(100, 100, 0) };
 		//
-		// Waypoint third = new Waypoint(150, 300, 0, 0);
-		// PathSegment curve = new PathSegment(first, second,
-		// straight.curve.getTotalArcLength(),
-		// connectWaypointsWithBezier(second, third));
+		// Trajectory trajectory = Pathfinder.generate(points, config);
 		//
-		// Path center = PathCreation.generatePath(new PathSegment[] { straight, curve
-		// }, 5, 100, 100);
-		Waypoint first = new Waypoint(0, 0, Math.PI / 2, 0);
-		Waypoint last = new Waypoint(50, 50, 0, 0);
+		// // Wheelbase Width = 0.5m
+		// TankModifier modifier = new TankModifier(trajectory).modify(25);
+		//
+		// // Do something with the new Trajectories...
+		// Trajectory left = modifier.getLeftTrajectory();
+		// Trajectory right = modifier.getRightTrajectory();
+		timer.printElapsed("PathFinder elapsed: ");
+
+		timer.reset();
+		WayPoint first = new WayPoint(0, 0, Math.PI / 2);
+		WayPoint last = new WayPoint(100, 100, 0);
 		PathSegment segment = new PathSegment(last, last, 0, connectWaypointsWithBezier(first, last));
-		Path center = PathCreation.generatePath(50.0, 10.0, segment);
-		TrajectoryHolder traj = center.getTrajectoryPoints(5, 0.01);
+
+		// DirectedLine line = new DirectedLine(last, last.add(last.heading.scale(30)));
+		// PathSegment segment2 = new PathSegment(line.start, line.end, 0, line);
+
+		Path center = PathCreation.generatePath(1, 10.0, segment);
+		double dt = 0.01;
+		TrajectoryHolder traj = center.getTrajectoryPoints(10, dt);
 		System.out.println(traj.left[traj.left.length - 1].position);
 		System.out.println(traj.right[traj.right.length - 1].position);
+		timer.printElapsed("My elapsed: ");
 		Graphing.graphPath(center, "Path 1");
+		graphMyPath(center, traj, dt);
+	}
+
+	public static void graphMyPath(Path center, TrajectoryHolder sides, double dt) {
+		double[] times = new double[sides.left.length];
+		double[] leftPos = new double[sides.left.length];
+		double[] rightPos = new double[sides.right.length];
+		double[] leftVel = new double[sides.left.length];
+		double[] rightVel = new double[sides.right.length];
+		double[] leftAcc = new double[sides.left.length];
+		double[] rightAcc = new double[sides.right.length];
+		double[] curvatures = new double[sides.right.length];
+		BezierCurve curve = ((BezierCurve) center.pathSegments[0].curve);
+		for (int i = 0; i < times.length; i++) {
+			times[i] = i * dt;
+			leftPos[i] = sides.left[i].position;
+			rightPos[i] = sides.right[i].position;
+			leftVel[i] = sides.left[i].velocity;
+			rightVel[i] = sides.right[i].velocity;
+			leftAcc[i] = sides.left[i].acceleration;
+			rightAcc[i] = sides.right[i].acceleration;
+
+			curvatures[i] = curve.curvature(curve.tFromArcLength(center.profile.stateByTime(i * dt).get().pos()))
+					* -200;
+		}
+		plotSide(times, leftPos, rightPos, "Pos vs Time, L=B,R=R");
+		plotSide(times, leftVel, rightVel, curvatures, "Vel vs Time, L=B,R=R");
+		plotSide(times, leftAcc, rightAcc, "Acc vs Time, L=B,R=R");
+
+	}
+
+	private static void plotSide(double[] x, double[] y1, double[] y2, String title) {
+		FalconLinePlot fig2 = new FalconLinePlot(x, y1, Color.BLUE, Color.BLUE);
+		fig2.yGridOn();
+		fig2.xGridOn();
+		fig2.addData(x, y2, Color.RED);
+		fig2.setTitle(title);
+	}
+
+	private static void plotSide(double[] x, double[] y1, double[] y2, double[] y3, String title) {
+		FalconLinePlot fig2 = new FalconLinePlot(x, y1, Color.BLUE, Color.BLUE);
+		fig2.yGridOn();
+		fig2.xGridOn();
+		fig2.addData(x, y2, Color.RED);
+		fig2.addData(x, y3, Color.GREEN);
+		fig2.setTitle(title);
 	}
 
 	public static final double midControlPoint = 0.5;
 
-	public static BezierCurve connectWaypointsWithBezier(Waypoint start, Waypoint end) {
+	public static BezierCurve connectWaypointsWithBezier(WayPoint start, WayPoint end) {
 		return connectWaypointsWithBezier(start, end, midControlPoint);
 	}
 
-	public static BezierCurve connectWaypointsWithBezier(Waypoint start, Waypoint end, double n) {
+	public static BezierCurve connectWaypointsWithBezier(WayPoint start, WayPoint end, double n) {
 		DirectedLine lineA = new DirectedLine(start);
 		DirectedLine lineB = new DirectedLine(end);
 		Vector intersection = lineA.getIntersection(lineB);
@@ -112,16 +176,14 @@ public class PathCreation {
 
 		MotionState previousState = new MotionState(0, 0, 0, 0);
 
-		Waypoint endWaypoint = pathSegments[0].end;
 		MotionProfileGoal goalState = new MotionProfileGoal(pathSegments[0].curve.getTotalArcLength(),
-				endWaypoint.absVelocity, CompletionBehavior.OVERSHOOT);
+				pathSegments[0].absVelocity, CompletionBehavior.OVERSHOOT);
 		MotionProfile currentProfile = GenerateMotionProfile.generateStraightMotionProfile(constraints, goalState,
 				previousState);
 		previousState = currentProfile.endState();
 
 		for (int i = 1; i < pathSegments.length; i++) {
-			endWaypoint = pathSegments[i].end;
-			goalState = new MotionProfileGoal(pathSegments[i].curve.getTotalArcLength(), endWaypoint.absVelocity,
+			goalState = new MotionProfileGoal(pathSegments[i].curve.getTotalArcLength(), pathSegments[0].absVelocity,
 					CompletionBehavior.OVERSHOOT);
 			currentProfile.appendProfile(
 					GenerateMotionProfile.generateStraightMotionProfile(constraints, goalState, previousState));

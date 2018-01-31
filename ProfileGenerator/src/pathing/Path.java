@@ -7,8 +7,8 @@ import motion.MotionState;
 
 public class Path {
 
-	private final MotionProfile profile;
-	private final PathSegment[] pathSegments;
+	public final MotionProfile profile;
+	public final PathSegment[] pathSegments;
 
 	public Path(MotionProfile profile, PathSegment[] pathSegments) {
 		this.profile = profile;
@@ -57,7 +57,7 @@ public class Path {
 			double curvature = currentSegment.curve.getCurvatureAtArcLength(state.pos());
 			double dArc = state.pos() - previousState.pos();
 
-			if (Math.abs(curvature) < 1.0E-10) {
+			if (Math.abs(curvature) < 1.0E-20) {
 				left[i] = new TrajectoryPoint(left[i - 1].position + dArc, state.vel(), state.acc(), pointDurationSec);
 				right[i] = new TrajectoryPoint(right[i - 1].position + dArc, state.vel(), state.acc(),
 						pointDurationSec);
