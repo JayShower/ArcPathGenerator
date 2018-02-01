@@ -1,7 +1,9 @@
 package pathing;
 
-import java.awt.Color;
-
+import jaci.pathfinder.Pathfinder;
+import jaci.pathfinder.Trajectory;
+import jaci.pathfinder.Waypoint;
+import jaci.pathfinder.modifiers.TankModifier;
 import math.BezierCurve;
 import math.DirectedLine;
 import math.Timer;
@@ -13,92 +15,45 @@ import motion.MotionProfileGoal;
 import motion.MotionProfileGoal.CompletionBehavior;
 import motion.MotionState;
 import pathing.Path.TrajectoryHolder;
-import plot.FalconLinePlot;
 import plot.Graphing;
 
 public class PathCreation {
 
 	public static void main(String[] args) {
-		System.loadLibrary("pathfinderjava");
 		Timer timer = new Timer();
 		timer.reset();
-		// Trajectory.Config config = new
-		// Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC,
-		// Trajectory.Config.SAMPLES_HIGH, 0.05, 1.7, 2.0, 60.0);
-		// Waypoint[] points = new Waypoint[] { new Waypoint(0, 0, Pathfinder.d2r(90)),
-		// new Waypoint(100, 100, 0) };
-		//
-		// Trajectory trajectory = Pathfinder.generate(points, config);
-		//
-		// // Wheelbase Width = 0.5m
-		// TankModifier modifier = new TankModifier(trajectory).modify(25);
-		//
-		// // Do something with the new Trajectories...
-		// Trajectory left = modifier.getLeftTrajectory();
-		// Trajectory right = modifier.getRightTrajectory();
+
+		Trajectory.Config config = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC,
+				Trajectory.Config.SAMPLES_HIGH, 0.05, 1.7, 2.0, 60.0);
+		Waypoint[] points = new Waypoint[] { new Waypoint(0, 0, Pathfinder.d2r(90)),
+				new Waypoint(50, 100, Pathfinder.d2r(45)), new Waypoint(150, 150, 0) };
+
+		Trajectory trajectory = Pathfinder.generate(points, config);
+
+		// Wheelbase Width = 0.5m
+		TankModifier modifier = new TankModifier(trajectory).modify(25);
+
+		// Do something with the new Trajectories...
+		Trajectory left = modifier.getLeftTrajectory();
+		Trajectory right = modifier.getRightTrajectory();
 		timer.printElapsed("PathFinder elapsed: ");
+		Graphing.graphPathfinder(trajectory, left, right);
 
 		timer.reset();
 		WayPoint first = new WayPoint(0, 0, Math.PI / 2);
-		WayPoint last = new WayPoint(100, 100, 0);
+		WayPoint last = new WayPoint(150, 150, 0);
 		PathSegment segment = new PathSegment(last, last, 0, connectWaypointsWithBezier(first, last));
 
 		// DirectedLine line = new DirectedLine(last, last.add(last.heading.scale(30)));
 		// PathSegment segment2 = new PathSegment(line.start, line.end, 0, line);
 
-		Path center = PathCreation.generatePath(1, 10.0, segment);
+		Path center = PathCreation.generatePath(25, 25.0, segment);
 		double dt = 0.01;
 		TrajectoryHolder traj = center.getTrajectoryPoints(10, dt);
 		System.out.println(traj.left[traj.left.length - 1].position);
 		System.out.println(traj.right[traj.right.length - 1].position);
 		timer.printElapsed("My elapsed: ");
-		Graphing.graphPath(center, "Path 1");
-		graphMyPath(center, traj, dt);
-	}
-
-	public static void graphMyPath(Path center, TrajectoryHolder sides, double dt) {
-		double[] times = new double[sides.left.length];
-		double[] leftPos = new double[sides.left.length];
-		double[] rightPos = new double[sides.right.length];
-		double[] leftVel = new double[sides.left.length];
-		double[] rightVel = new double[sides.right.length];
-		double[] leftAcc = new double[sides.left.length];
-		double[] rightAcc = new double[sides.right.length];
-		double[] curvatures = new double[sides.right.length];
-		BezierCurve curve = ((BezierCurve) center.pathSegments[0].curve);
-		for (int i = 0; i < times.length; i++) {
-			times[i] = i * dt;
-			leftPos[i] = sides.left[i].position;
-			rightPos[i] = sides.right[i].position;
-			leftVel[i] = sides.left[i].velocity;
-			rightVel[i] = sides.right[i].velocity;
-			leftAcc[i] = sides.left[i].acceleration;
-			rightAcc[i] = sides.right[i].acceleration;
-
-			curvatures[i] = curve.curvature(curve.tFromArcLength(center.profile.stateByTime(i * dt).get().pos()))
-					* -200;
-		}
-		plotSide(times, leftPos, rightPos, "Pos vs Time, L=B,R=R");
-		plotSide(times, leftVel, rightVel, curvatures, "Vel vs Time, L=B,R=R");
-		plotSide(times, leftAcc, rightAcc, "Acc vs Time, L=B,R=R");
-
-	}
-
-	private static void plotSide(double[] x, double[] y1, double[] y2, String title) {
-		FalconLinePlot fig2 = new FalconLinePlot(x, y1, Color.BLUE, Color.BLUE);
-		fig2.yGridOn();
-		fig2.xGridOn();
-		fig2.addData(x, y2, Color.RED);
-		fig2.setTitle(title);
-	}
-
-	private static void plotSide(double[] x, double[] y1, double[] y2, double[] y3, String title) {
-		FalconLinePlot fig2 = new FalconLinePlot(x, y1, Color.BLUE, Color.BLUE);
-		fig2.yGridOn();
-		fig2.xGridOn();
-		fig2.addData(x, y2, Color.RED);
-		fig2.addData(x, y3, Color.GREEN);
-		fig2.setTitle(title);
+		Graphing.graphMyPath(center, traj, dt);
 	}
 
 	public static final double midControlPoint = 0.5;
@@ -174,7 +129,7 @@ public class PathCreation {
 	public static Path generatePath(double maxAcceleration, double maxVelocity, PathSegment... pathSegments) {
 		MotionProfileConstraints constraints = new MotionProfileConstraints(maxVelocity, maxAcceleration);
 
-		MotionState previousState = new MotionState(0, 0, 0, 0);
+		MotionState previousState = new MotionState(0, 0, 0, maxAcceleration);
 
 		MotionProfileGoal goalState = new MotionProfileGoal(pathSegments[0].curve.getTotalArcLength(),
 				pathSegments[0].absVelocity, CompletionBehavior.OVERSHOOT);

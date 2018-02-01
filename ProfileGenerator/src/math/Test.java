@@ -12,7 +12,7 @@ public class Test {
 
 	public static void test() {
 		WayPoint first = new WayPoint(0, 0, Math.PI / 2);
-		WayPoint last = new WayPoint(100, 100, 0);
+		WayPoint last = new WayPoint(150, 150, 0);
 		Timer timer = new Timer();
 		timer.reset();
 		BezierCurve curve = PathCreation.connectWaypointsWithBezier(first, last, 0.5);
@@ -35,7 +35,7 @@ public class Test {
 		graphCurvature(curve);
 		// testInterpolation();
 		// testLUTinterpolation();
-		testLUTinvertibility(curve);
+		// testLUTinvertibility(curve);
 	}
 
 	public static void graphControlPoints(BezierCurve curve) {
@@ -100,14 +100,8 @@ public class Test {
 	public static void graphDeCasteljau(BezierCurve curve) {
 		double testResolution = 500;
 		ArrayList<Vector> deCasteljau = new ArrayList<Vector>();
-		for (int i = 0; i <= testResolution; i++) {
+		for (int i = 0; i < testResolution; i++) {
 			deCasteljau.add(curve.deCasteljau(i / testResolution));
-		}
-		double[] x = new double[curve.controlPoints.length];
-		double[] y = new double[x.length];
-		for (int i = 0; i < x.length; i++) {
-			x[i] = curve.controlPoints[i].x;
-			y[i] = curve.controlPoints[i].y;
 		}
 		double[][] deCasteljauPoints = convertToArray(deCasteljau);
 		FalconLinePlot fig2 = new FalconLinePlot(deCasteljauPoints[0], deCasteljauPoints[1], Color.blue, Color.green);
@@ -116,6 +110,12 @@ public class Test {
 		fig2.setYLabel("Y");
 		fig2.setXLabel("X");
 		fig2.setTitle("deCasteljau Graph");
+		double[] x = new double[curve.controlPoints.length];
+		double[] y = new double[x.length];
+		for (int i = 0; i < x.length; i++) {
+			x[i] = curve.controlPoints[i].x;
+			y[i] = curve.controlPoints[i].y;
+		}
 		// FalconLinePlot controlPointsGraph = new FalconLinePlot(x, y, Color.red,
 		// Color.green);
 		// controlPointsGraph.yGridOn();
@@ -152,6 +152,7 @@ public class Test {
 		double[] inputs = new double[resolution];
 		double[] distance = new double[resolution];
 		double[] curvature = new double[resolution];
+		double maxC = Math.abs(curve.curvature(0));
 		Timer timer = new Timer();
 		timer.reset();
 		for (int i = 0; i < resolution; i++) {
@@ -159,10 +160,11 @@ public class Test {
 			inputs[i] = t;
 			distance[i] = curve.getArcLength(t);
 			curvature[i] = curve.curvature(t);
+			maxC = Math.max(maxC, Math.abs(curve.curvature(t)));
 			// System.out.printf("%.6f, %.6f%n", inputs[i], curvature[i]);
 		}
 		timer.printElapsed("Time to calculate curvatures: ");
-
+		System.out.println(maxC);
 		System.out.println();
 
 		FalconLinePlot fig2 = new FalconLinePlot(distance, curvature, Color.blue, Color.green);

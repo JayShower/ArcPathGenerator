@@ -1,8 +1,8 @@
 package math;
 
-public abstract class Curve {
+public interface Curve {
 
-	public abstract double getTotalArcLength();
+	public double getTotalArcLength();
 
 	/**
 	 * 
@@ -11,6 +11,7 @@ public abstract class Curve {
 	 * @return curvature. Positive curvature indicates that left side is inner side,
 	 *         negative curvature indicates that right side is inner side
 	 */
-	public abstract double getCurvatureAtArcLength(double arcLength);
+	public double getCurvatureAtArcLength(double arcLength);
 
+	public Vector getPointAtArcLength(double arcLength);
 }

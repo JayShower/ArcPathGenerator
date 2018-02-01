@@ -2,7 +2,7 @@ package math;
 
 import pathing.WayPoint;
 
-public class DirectedLine extends Curve {
+public class DirectedLine implements Curve {
 
 	public final Vector start;
 	public final Vector end;
@@ -62,6 +62,11 @@ public class DirectedLine extends Curve {
 	@Override
 	public String toString() {
 		return "Line: " + start.toString() + " " + end.toString();
+	}
+
+	@Override
+	public Vector getPointAtArcLength(double arcLength) {
+		return getPointAtD(arcLength);
 	}
 
 }
