@@ -1,9 +1,5 @@
 package pathing;
 
-import jaci.pathfinder.Pathfinder;
-import jaci.pathfinder.Trajectory;
-import jaci.pathfinder.Waypoint;
-import jaci.pathfinder.modifiers.TankModifier;
 import math.BezierCurve;
 import math.DirectedLine;
 import math.Timer;
@@ -15,45 +11,34 @@ import motion.MotionProfileGoal;
 import motion.MotionProfileGoal.CompletionBehavior;
 import motion.MotionState;
 import pathing.Path.TrajectoryHolder;
-import plot.Graphing;
 
 public class PathCreation {
 
 	public static void main(String[] args) {
 		Timer timer = new Timer();
 		timer.reset();
-
-		Trajectory.Config config = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC,
-				Trajectory.Config.SAMPLES_HIGH, 0.05, 1.7, 2.0, 60.0);
-		Waypoint[] points = new Waypoint[] { new Waypoint(0, 0, Pathfinder.d2r(90)),
-				new Waypoint(50, 100, Pathfinder.d2r(45)), new Waypoint(150, 150, 0) };
-
-		Trajectory trajectory = Pathfinder.generate(points, config);
-
-		// Wheelbase Width = 0.5m
-		TankModifier modifier = new TankModifier(trajectory).modify(25);
-
-		// Do something with the new Trajectories...
-		Trajectory left = modifier.getLeftTrajectory();
-		Trajectory right = modifier.getRightTrajectory();
-		timer.printElapsed("PathFinder elapsed: ");
-		Graphing.graphPathfinder(trajectory, left, right);
-
-		timer.reset();
+		double dt = 0.01;
+		double maxVel = 25;
+		double maxAcc = 15;
+		double width = 10;
 		WayPoint first = new WayPoint(0, 0, Math.PI / 2);
 		WayPoint last = new WayPoint(150, 150, 0);
-		PathSegment segment = new PathSegment(last, last, 0, connectWaypointsWithBezier(first, last));
+		BezierCurve curve = connectWaypointsWithBezier(first, last);
+		timer.printElapsed("Bezier elapsed: ");
+		PathSegment segment = new PathSegment(last, last, 0, curve);
 
 		// DirectedLine line = new DirectedLine(last, last.add(last.heading.scale(30)));
 		// PathSegment segment2 = new PathSegment(line.start, line.end, 0, line);
 
-		Path center = PathCreation.generatePath(25, 25.0, segment);
-		double dt = 0.01;
-		TrajectoryHolder traj = center.getTrajectoryPoints(10, dt);
+		Path center = PathCreation.generatePath(maxAcc, maxVel, segment);
+		timer.printElapsed("Path elapsed:");
+		TrajectoryHolder traj = center.getTrajectoryPoints(width, dt);
 		System.out.println(traj.left[traj.left.length - 1].position);
 		System.out.println(traj.right[traj.right.length - 1].position);
-		timer.printElapsed("My elapsed: ");
-		Graphing.graphMyPath(center, traj, dt);
+		timer.printElapsed("Total elapsed: ");
+		// Test.graphDeCasteljau(curve);
+		// something is messed up with the FalconGraphing
+		// Graphing.graphMyPath(center, traj, dt, curve);
 	}
 
 	public static final double midControlPoint = 0.5;
@@ -63,6 +48,7 @@ public class PathCreation {
 	}
 
 	public static BezierCurve connectWaypointsWithBezier(WayPoint start, WayPoint end, double n) {
+		// Timer t = new Timer();
 		DirectedLine lineA = new DirectedLine(start);
 		DirectedLine lineB = new DirectedLine(end);
 		Vector intersection = lineA.getIntersection(lineB);
@@ -80,6 +66,7 @@ public class PathCreation {
 		// System.out.println(v3);
 		// System.out.println(v4);
 		// System.out.println(v5);
+		// t.printElapsed("time");
 		return new BezierCurve(new Vector[] { v1, v2, v3, v4, v5 });
 	}
 

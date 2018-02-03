@@ -30,9 +30,9 @@ public class Test {
 		// graphControlPoints(curve);
 		// testBezierSpeed(curve);
 		// testdeCasteljauSpeed(curve);
-		graphDeCasteljau(curve);
-		// testArcLengthSpeed(curve);
-		graphCurvature(curve);
+		// graphDeCasteljau(curve);
+		testArcLengthSpeed(curve);
+		// graphCurvature(curve);
 		// testInterpolation();
 		// testLUTinterpolation();
 		// testLUTinvertibility(curve);
@@ -128,6 +128,8 @@ public class Test {
 
 	public static void testArcLengthSpeed(BezierCurve curve) {
 
+		System.out.println("Single integral arc length: " + curve.arcLengthIntegral(0, 1));
+		System.out.println("Warning: Inaccurate tests due to java bytecode optimization");
 		Timer timer = new Timer();
 		timer.reset();
 		curve.tToArcLengthTable().setResolution(5000);
@@ -142,6 +144,11 @@ public class Test {
 		timer.reset();
 		curve.tToArcLengthTable().setResolution(500);
 		System.out.println("Arc length (500 pts): " + curve.getArcLength(1));
+		timer.printElapsed("Time to calculate LUT: ");
+		System.out.println();
+
+		curve.tToArcLengthTable().setResolution(50);
+		System.out.println("Arc length (50 pts): " + curve.getArcLength(1));
 		timer.printElapsed("Time to calculate LUT: ");
 		System.out.println();
 	}
@@ -188,22 +195,23 @@ public class Test {
 		return 2 * in;
 	}
 
-	public static void testLUTinterpolation() {
-		double lower = 0;
-		double upper = 5;
-		int resolution = 1000;
-		double increment = (upper - lower) / (resolution - 1);
-		LookupTable lut = new LookupTable(Test::inputOutput, 0, increment * resolution);
-		for (int i = 0; i < resolution; i++) {
-			double t = i * increment;
-			double out = lut.getOutput(t);
-			double inCalc = lut.getInput(out);
-			System.out.println("t: " + t);
-			System.out.printf("\t%.10f, %.10f, %.10f, %n", t, inCalc, t - inCalc);
-			double realOut = inputOutput(t);
-			System.out.printf("\t%.10f, %.10f, %.10f, %n", realOut, out, realOut - out);
-		}
-	}
+	// public static void testLUTinterpolation() {
+	// double lower = 0;
+	// double upper = 5;
+	// int resolution = 1000;
+	// double increment = (upper - lower) / (resolution - 1);
+	// IntegralLookupTable lut = new IntegralLookupTable(Test::inputOutput, 0,
+	// increment * resolution);
+	// for (int i = 0; i < resolution; i++) {
+	// double t = i * increment;
+	// double out = lut.getOutput(t);
+	// double inCalc = lut.getInput(out);
+	// System.out.println("t: " + t);
+	// System.out.printf("\t%.10f, %.10f, %.10f, %n", t, inCalc, t - inCalc);
+	// double realOut = inputOutput(t);
+	// System.out.printf("\t%.10f, %.10f, %.10f, %n", realOut, out, realOut - out);
+	// }
+	// }
 
 	public static void testLUTinvertibility(BezierCurve curve) {
 		int resolution = 5000;

@@ -72,12 +72,8 @@ public class Path {
 				double rK = rR / r;
 				double leftV = state.vel() * lK;
 				double rightV = state.vel() * rK;
-				double leftA = state.acc() * lK;
-				double rightA = state.acc() * rK;
-				if (state.acc() == 0) {
-					leftA = (leftV - left[i - 1].velocity) / pointDurationSec;
-					rightA = (rightV - right[i - 1].velocity) / pointDurationSec;
-				}
+				double leftA = (leftV - left[i - 1].velocity) / pointDurationSec;
+				double rightA = (rightV - right[i - 1].velocity) / pointDurationSec;
 				left[i] = new TrajectoryPoint(left[i - 1].position + dArc * lK, leftV, leftA, pointDurationSec);
 				right[i] = new TrajectoryPoint(right[i - 1].position + dArc * rK, rightV, rightA, pointDurationSec);
 			}
