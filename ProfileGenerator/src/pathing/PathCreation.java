@@ -63,8 +63,8 @@ public class PathCreation {
 		// System.out.println(ce);
 		Vector v2 = ac.getPointAtPercent(n);
 		Vector v4 = ce.getPointAtPercent(n);
-		DirectedLine bd = new DirectedLine(v2, v4);
-		v3 = bd.getPointAtPercent(n);
+		// DirectedLine bd = new DirectedLine(v2, v4);
+		// v3 = bd.getPointAtPercent(n);
 		// System.out.println(v1);
 		// System.out.println(v2);
 		// System.out.println(v3);
@@ -120,7 +120,7 @@ public class PathCreation {
 	public static Path generatePath(double maxAcceleration, double maxVelocity, PathSegment... pathSegments) {
 		MotionProfileConstraints constraints = new MotionProfileConstraints(maxVelocity, maxAcceleration);
 
-		MotionState previousState = new MotionState(0, 0, 0, maxAcceleration);
+		MotionState previousState = new MotionState(0, 0, 0, 0);
 
 		MotionProfileGoal goalState = new MotionProfileGoal(pathSegments[0].curve.getTotalArcLength(),
 				pathSegments[0].absVelocity, CompletionBehavior.OVERSHOOT);

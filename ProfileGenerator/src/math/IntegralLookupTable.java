@@ -5,9 +5,16 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 public class IntegralLookupTable {
+
+	private static final ExecutorService threadPool = Executors.newFixedThreadPool(1);
 
 	private final BiFunction<Double, Double, Double> function;
 	private final double lowerInput;
@@ -21,7 +28,7 @@ public class IntegralLookupTable {
 	private NavigableMap<Double, Double> outIn;
 
 	public IntegralLookupTable(BiFunction<Double, Double, Double> function, double lowerInput, double upperInput) {
-		this(function, lowerInput, upperInput, 100);
+		this(function, lowerInput, upperInput, 500);
 	}
 
 	public IntegralLookupTable(BiFunction<Double, Double, Double> function, double lowerInput, double upperInput,
@@ -59,15 +66,30 @@ public class IntegralLookupTable {
 	// }
 
 	private void makeLUT() {
+		ArrayList<Future<Double>> tasks = new ArrayList<>(resolution);
+		tasks.add(threadPool.submit(() -> 0.0));
+		for (int i = 1; i < resolution; i++) {
+			double low = indexToInput(i - 1);
+			double up = indexToInput(i);
+			tasks.add(threadPool.submit(() -> function.apply(low, up)));
+		}
 		inOut = new ConcurrentSkipListMap<>();
 		outIn = new ConcurrentSkipListMap<>();
-		inOut.put(0.0, 0.0);
-		outIn.put(0.0, 0.0);
-		for (int i = 1; i < resolution; i++) {
+		double prevOut = 0.0;
+		// Timer t = new Timer();
+		for (int i = 0; i < tasks.size(); i++) {
 			double in = indexToInput(i);
-			double value = function.apply(indexToInput(i - 1), indexToInput(i));
-			inOut.put(indexToInput(i), inOut.get(indexToInput(i - 1)) + value);
-			outIn.put(inOut.get(in), in);
+			double out = 0;
+			try {
+				// t.reset();
+				out = tasks.get(i).get();
+				// t.printElapsed("Get elapsed time: ");
+			} catch (InterruptedException | ExecutionException e) {
+				e.printStackTrace();
+			}
+			prevOut = prevOut + out;
+			inOut.put(in, prevOut);
+			outIn.put(prevOut, in);
 		}
 		if (!isIncreasing()) {
 			System.err.println("Lookup table is not increasing!");
@@ -80,25 +102,38 @@ public class IntegralLookupTable {
 	}
 
 	public double getOutput(double input) {
-		Entry<Double, Double> lower = inOut.floorEntry(input);
-		Entry<Double, Double> upper = inOut.ceilingEntry(input);
 		Double val = inOut.get(input);
 		if (val != null) {
 			return val;
 		}
-		return inOut.computeIfAbsent(input,
-				d -> Util.linearInterpolate(lower.getKey(), lower.getValue(), upper.getKey(), upper.getValue(), d));
+		Entry<Double, Double> lower = inOut.floorEntry(input);
+		Entry<Double, Double> upper = inOut.ceilingEntry(input);
+		if (lower == null)
+			return upper.getValue();
+		if (upper == null)
+			return lower.getValue();
+		Function<Double, Double> f = d -> Util.linearInterpolate(lower.getKey(), lower.getValue(),
+				upper.getKey(),
+				upper.getValue(), d);
+		return inOut.computeIfAbsent(input, f);
 	}
 
 	public double getInput(double output) {
-		Entry<Double, Double> lower = outIn.floorEntry(output);
-		Entry<Double, Double> upper = outIn.ceilingEntry(output);
-		Double val = inOut.get(output);
+		Double val = outIn.get(output);
 		if (val != null) {
 			return val;
 		}
-		return inOut.computeIfAbsent(output,
-				d -> Util.linearInterpolate(lower.getKey(), lower.getValue(), upper.getKey(), upper.getValue(), d));
+		Entry<Double, Double> lower = outIn.floorEntry(output);
+		Entry<Double, Double> upper = outIn.ceilingEntry(output);
+		if (lower == null)
+			return upper.getValue();
+		if (upper == null)
+			return lower.getValue();
+		Function<Double, Double> f = d -> Util.linearInterpolate(lower.getKey(), lower.getValue(),
+				upper.getKey(),
+				upper.getValue(), d);
+		return outIn.computeIfAbsent(output,
+				f);
 	}
 
 	private boolean isIncreasing() {

@@ -30,8 +30,8 @@ public class Test {
 		graphControlPoints(curve);
 		testBezierSpeed(curve);
 		testdeCasteljauSpeed(curve);
-		graphDeCasteljau(curve);
-		// testArcLengthSpeed(curve);
+		// graphDeCasteljau(curve);
+		testArcLengthSpeed(curve);
 		graphCurvature(curve);
 		// testInterpolation();
 		// testLUTinterpolation();
@@ -160,6 +160,7 @@ public class Test {
 		double[] distance = new double[resolution];
 		double[] curvature = new double[resolution];
 		double maxC = Math.abs(curve.curvature(0));
+		double minC = Double.MAX_VALUE;
 		Timer timer = new Timer();
 		timer.reset();
 		for (int i = 0; i < resolution; i++) {
@@ -168,10 +169,12 @@ public class Test {
 			distance[i] = curve.getArcLength(t);
 			curvature[i] = curve.curvature(t);
 			maxC = Math.max(maxC, Math.abs(curve.curvature(t)));
+			minC = Math.min(minC, Math.abs(curve.curvature(t)));
 			// System.out.printf("%.6f, %.6f%n", inputs[i], curvature[i]);
 		}
 		timer.printElapsed("Time to calculate curvatures: ");
 		System.out.println("Max curvature: " + maxC);
+		System.out.println("Min curvature: " + minC);
 		System.out.println();
 
 		FalconLinePlot fig2 = new FalconLinePlot(distance, curvature, Color.blue, Color.green);

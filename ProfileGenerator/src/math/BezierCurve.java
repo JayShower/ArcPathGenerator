@@ -164,9 +164,7 @@ public class BezierCurve implements Curve {
 
 	@Override
 	public double getTotalArcLength() {
-		if (tToArcLengthTable == null)
-			createTToArcLengthTable();
-		return tToArcLengthTable.getOutput(1);
+		return arcLengthIntegral(0, 1);
 	}
 
 	public double getArcLength(double t) {
