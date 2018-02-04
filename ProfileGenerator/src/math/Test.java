@@ -27,12 +27,12 @@ public class Test {
 
 		// LookupTable lut = new LookupTable(d -> d * d + 1, 0, 9, 10);
 		// System.out.println(lut.getOutput(2.5));
-		// graphControlPoints(curve);
-		// testBezierSpeed(curve);
-		// testdeCasteljauSpeed(curve);
-		// graphDeCasteljau(curve);
-		testArcLengthSpeed(curve);
-		// graphCurvature(curve);
+		graphControlPoints(curve);
+		testBezierSpeed(curve);
+		testdeCasteljauSpeed(curve);
+		graphDeCasteljau(curve);
+		// testArcLengthSpeed(curve);
+		graphCurvature(curve);
 		// testInterpolation();
 		// testLUTinterpolation();
 		// testLUTinvertibility(curve);
@@ -50,19 +50,19 @@ public class Test {
 		controlPointsGraph.xGridOn();
 		controlPointsGraph.setYLabel("Y");
 		controlPointsGraph.setXLabel("X");
-		controlPointsGraph.setMaxMin(0, 10, 0, 10);
+		controlPointsGraph.setMaxMin(0, 200, 0, 200);
 		controlPointsGraph.setTitle("Control Points");
 		System.out.println();
 	}
 
 	public static void testBezierSpeed(BezierCurve curve) {
-		// double testResolution = 500;
-		// Timer timer = new Timer();
-		// timer.reset();
-		// for (int i = 0; i <= testResolution; i++) {
-		// curve.bezier(i / testResolution);
-		// }
-		// timer.printElapsed("Bezier Time: ");
+		double testResolution = 5000;
+		Timer timer = new Timer();
+		timer.reset();
+		for (int i = 0; i <= testResolution; i++) {
+			curve.bezier(i / testResolution);
+		}
+		timer.printElapsed("Bezier Time: ");
 		// timer.reset();
 		// for (int i = 0; i <= testResolution; i++) {
 		// curve.bezierX(i / testResolution);
@@ -73,7 +73,7 @@ public class Test {
 		// curve.bezierY(i / testResolution);
 		// }
 		// timer.printElapsed("Bezier Y Time: ");
-		// System.out.println();
+		System.out.println();
 	}
 
 	public static void testdeCasteljauSpeed(BezierCurve curve) {
@@ -84,16 +84,16 @@ public class Test {
 			curve.deCasteljau(i / testResolution);
 		}
 		timer.printElapsed("deCasteljau Time: ");
-		timer.reset();
-		for (int i = 0; i <= testResolution; i++) {
-			curve.deCasteljauX(i / testResolution);
-		}
-		timer.printElapsed("deCasteljau X Time: ");
-		timer.reset();
-		for (int i = 0; i <= testResolution; i++) {
-			curve.deCasteljauY(i / testResolution);
-		}
-		timer.printElapsed("deCasteljau Y Time: ");
+		// timer.reset();
+		// for (int i = 0; i <= testResolution; i++) {
+		// curve.deCasteljauX(i / testResolution);
+		// }
+		// timer.printElapsed("deCasteljau X Time: ");
+		// timer.reset();
+		// for (int i = 0; i <= testResolution; i++) {
+		// curve.deCasteljauY(i / testResolution);
+		// }
+		// timer.printElapsed("deCasteljau Y Time: ");
 		System.out.println();
 	}
 
@@ -171,7 +171,7 @@ public class Test {
 			// System.out.printf("%.6f, %.6f%n", inputs[i], curvature[i]);
 		}
 		timer.printElapsed("Time to calculate curvatures: ");
-		System.out.println(maxC);
+		System.out.println("Max curvature: " + maxC);
 		System.out.println();
 
 		FalconLinePlot fig2 = new FalconLinePlot(distance, curvature, Color.blue, Color.green);

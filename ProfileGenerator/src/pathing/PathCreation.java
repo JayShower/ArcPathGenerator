@@ -2,6 +2,7 @@ package pathing;
 
 import math.BezierCurve;
 import math.DirectedLine;
+import math.Test;
 import math.Timer;
 import math.Vector;
 import motion.GenerateMotionProfile;
@@ -11,6 +12,7 @@ import motion.MotionProfileGoal;
 import motion.MotionProfileGoal.CompletionBehavior;
 import motion.MotionState;
 import pathing.Path.TrajectoryHolder;
+import plot.Graphing;
 
 public class PathCreation {
 
@@ -36,9 +38,9 @@ public class PathCreation {
 		System.out.println(traj.left[traj.left.length - 1].position);
 		System.out.println(traj.right[traj.right.length - 1].position);
 		timer.printElapsed("Total elapsed: ");
-		// Test.graphDeCasteljau(curve);
+		Test.graphDeCasteljau(curve);
 		// something is messed up with the FalconGraphing
-		// Graphing.graphMyPath(center, traj, dt, curve);
+		Graphing.graphMyPath(center, traj, dt, curve);
 	}
 
 	public static final double midControlPoint = 0.5;
@@ -61,6 +63,8 @@ public class PathCreation {
 		// System.out.println(ce);
 		Vector v2 = ac.getPointAtPercent(n);
 		Vector v4 = ce.getPointAtPercent(n);
+		DirectedLine bd = new DirectedLine(v2, v4);
+		v3 = bd.getPointAtPercent(n);
 		// System.out.println(v1);
 		// System.out.println(v2);
 		// System.out.println(v3);

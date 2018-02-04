@@ -52,7 +52,7 @@ public class BezierCurve implements Curve {
 		return new BezierCurve(newPoints, false); // warning, recursive
 	}
 
-	private Vector bezier(double t) {
+	Vector bezier(double t) {
 		double x = 0;
 		double y = 0;
 		double mt = 1 - t;
@@ -64,25 +64,25 @@ public class BezierCurve implements Curve {
 		return new Vector(x, y);
 	}
 
-	private double bezierX(double t) {
-		double result = 0;
-		double mt = 1 - t;
-		for (int k = 0; k <= n; k++) {
-			double term = BINOMIAL[n][k] * Math.pow(mt, n - k) * Math.pow(t, k);
-			result = result + controlPoints[k].x * term;
-		}
-		return result;
-	}
-
-	private double bezierY(double t) {
-		double result = 0;
-		double mt = 1 - t;
-		for (int k = 0; k <= n; k++) {
-			double term = BINOMIAL[n][k] * Math.pow(mt, n - k) * Math.pow(t, k);
-			result = result + controlPoints[k].y * term;
-		}
-		return result;
-	}
+	// private double bezierX(double t) {
+	// double result = 0;
+	// double mt = 1 - t;
+	// for (int k = 0; k <= n; k++) {
+	// double term = BINOMIAL[n][k] * Math.pow(mt, n - k) * Math.pow(t, k);
+	// result = result + controlPoints[k].x * term;
+	// }
+	// return result;
+	// }
+	//
+	// private double bezierY(double t) {
+	// double result = 0;
+	// double mt = 1 - t;
+	// for (int k = 0; k <= n; k++) {
+	// double term = BINOMIAL[n][k] * Math.pow(mt, n - k) * Math.pow(t, k);
+	// result = result + controlPoints[k].y * term;
+	// }
+	// return result;
+	// }
 
 	public Vector deCasteljau(double t) {
 		// return bezier(t);
@@ -101,34 +101,34 @@ public class BezierCurve implements Curve {
 		return new Vector(x[0], y[0]);
 	}
 
-	public double deCasteljauX(double t) {
-		double[] x = new double[controlPoints.length];
-		for (int i = 0; i < x.length; i++) {
-			x[i] = controlPoints[i].x;
-		}
-		return deCasteljauSingle(x, t);
-	}
-
-	public double deCasteljauY(double t) {
-		double[] y = new double[controlPoints.length];
-		for (int i = 0; i < y.length; i++) {
-			y[i] = controlPoints[i].y;
-		}
-		return deCasteljauSingle(y, t);
-	}
-
-	private double deCasteljauSingle(double[] points, double t) {
-		if (points.length == 1) {
-			return points[0];
-		} else {
-			double[] newPoints = new double[points.length - 1];
-			for (int i = 0; i < newPoints.length; i++) {
-				double mt = 1 - t;
-				newPoints[i] = points[i] * mt + points[i + 1] * t;
-			}
-			return deCasteljauSingle(newPoints, t);
-		}
-	}
+	// public double deCasteljauX(double t) {
+	// double[] x = new double[controlPoints.length];
+	// for (int i = 0; i < x.length; i++) {
+	// x[i] = controlPoints[i].x;
+	// }
+	// return deCasteljauSingle(x, t);
+	// }
+	//
+	// public double deCasteljauY(double t) {
+	// double[] y = new double[controlPoints.length];
+	// for (int i = 0; i < y.length; i++) {
+	// y[i] = controlPoints[i].y;
+	// }
+	// return deCasteljauSingle(y, t);
+	// }
+	//
+	// private double deCasteljauSingle(double[] points, double t) {
+	// if (points.length == 1) {
+	// return points[0];
+	// } else {
+	// double[] newPoints = new double[points.length - 1];
+	// for (int i = 0; i < newPoints.length; i++) {
+	// double mt = 1 - t;
+	// newPoints[i] = points[i] * mt + points[i + 1] * t;
+	// }
+	// return deCasteljauSingle(newPoints, t);
+	// }
+	// }
 
 	// public Vector tangent(double t) {
 	// return derivative.deCasteljau(t);
