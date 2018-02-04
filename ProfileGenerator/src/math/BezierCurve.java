@@ -2,16 +2,12 @@ package math;
 
 import java.util.Arrays;
 
-public class BezierCurve implements Curve {
-
-	private static final int[][] BINOMIAL = { { 1 }, { 1, 1 }, { 1, 2, 1 }, { 1, 3, 3, 1 }, { 1, 4, 6, 4, 1 },
-			{ 1, 5, 10, 10, 5, 1 }, { 1, 6, 15, 20, 15, 6, 1 } };
+public final class BezierCurve implements Curve {
 
 	public final Vector[] controlPoints;
 	private BezierCurve derivative;
 	public final double[] controlPointsX;
 	public final double[] controlPointsY;
-	// private final int n;
 
 	/**
 	 * Makes a new Bezier Curve
@@ -68,16 +64,16 @@ public class BezierCurve implements Curve {
 		return new Vector(x[0], y[0]);
 	}
 
-	public BezierCurve getDerivative() {
+	public BezierCurve derivative() {
 		if (derivative == null) {
 			derivative = calculateDerivative();
-			System.out.println("calculated derivative");
+			// System.out.println("calculated derivative");
 		}
 		return derivative;
 	}
 
 	public double arcLengthDerivative(double t) {
-		return getDerivative().deCasteljau(t).magnitude;
+		return derivative().deCasteljau(t).magnitude();
 	}
 
 	public double arcLengthIntegral(double lower, double upper) {
@@ -105,8 +101,8 @@ public class BezierCurve implements Curve {
 	}
 
 	public double curvature(double t) {
-		Vector d1 = getDerivative().deCasteljau(t);
-		Vector d2 = getDerivative().getDerivative().deCasteljau(t);
+		Vector d1 = derivative().deCasteljau(t);
+		Vector d2 = derivative().derivative().deCasteljau(t);
 		return Util.curvature2d(d1.x, d2.x, d1.y, d2.y);
 	}
 

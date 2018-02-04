@@ -1,7 +1,7 @@
 package pathing;
 
 import math.BezierCurve;
-import math.DirectedLine;
+import math.Line;
 import math.Test;
 import math.Timer;
 import math.Vector;
@@ -51,15 +51,15 @@ public class PathCreation {
 
 	public static BezierCurve connectWaypointsWithBezier(WayPoint start, WayPoint end, double n) {
 		// Timer t = new Timer();
-		DirectedLine lineA = new DirectedLine(start);
-		DirectedLine lineB = new DirectedLine(end);
+		Line lineA = new Line(start);
+		Line lineB = new Line(end);
 		Vector intersection = lineA.getIntersection(lineB);
-		Vector v1 = start;
-		Vector v5 = end;
+		Vector v1 = start.position;
+		Vector v5 = end.position;
 		Vector v3 = intersection;
-		DirectedLine ac = new DirectedLine(v1, v3);
+		Line ac = new Line(v1, v3);
 		// System.out.println(ac);
-		DirectedLine ce = new DirectedLine(v3, v5);
+		Line ce = new Line(v3, v5);
 		// System.out.println(ce);
 		Vector v2 = ac.getPointAtPercent(n);
 		Vector v4 = ce.getPointAtPercent(n);
@@ -123,7 +123,9 @@ public class PathCreation {
 		MotionState previousState = new MotionState(0, 0, 0, 0);
 
 		double goalVel = pathSegments[0].end.vel;
+		// System.out.println(pathSegments[0].curve);
 		double goalPos = pathSegments[0].curve.getTotalArcLength() * Math.signum(goalVel);
+		// System.out.println("Goal pos: " + goalPos);
 		MotionProfileGoal goalState = new MotionProfileGoal(goalPos,
 				Math.abs(goalVel), CompletionBehavior.OVERSHOOT);
 		MotionProfile currentProfile = GenerateMotionProfile.generateStraightMotionProfile(constraints, goalState,

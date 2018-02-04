@@ -2,29 +2,30 @@ package math;
 
 import pathing.WayPoint;
 
-public class DirectedLine implements Curve {
+public class Line implements Curve {
 
 	public final Vector start;
 	public final Vector end;
+	private Vector direction;
 
-	public DirectedLine(Vector start, Vector end) {
+	public Line(Vector start, Vector end) {
 		this.start = start;
 		this.end = end;
 	}
 
-	public DirectedLine(WayPoint w) {
-		this(w, w.add(w.heading));
+	public Line(WayPoint w) {
+		start = w.position;
+		end = w.position.add(w.heading);
+		direction = w.heading;
 	}
 
 	public Vector getDirection() {
-		return end.subtract(start);
+		if (direction == null)
+			direction = end.subtract(start);
+		return direction;
 	}
 
 	public Vector getPointAtD(double distance) {
-		// System.out.println("Point At D");
-		// System.out.println(distance);
-		// System.out.println(start.cosine() * distance);
-		// System.out.println(start.sine() * distance);
 		Vector direction = getDirection();
 		return start.add(new Vector(direction.cosine() * distance, direction.sine() * distance));
 	}
@@ -36,10 +37,26 @@ public class DirectedLine implements Curve {
 	 * @return
 	 */
 	public Vector getPointAtPercent(double percent) {
-		return getPointAtD(percent * getDirection().magnitude);
+		return getPointAtD(percent * getDirection().magnitude());
 	}
 
-	public Vector getIntersection(DirectedLine other) {
+	public boolean intersect(Line other) {
+		return getDirection().slope() != other.getDirection().slope();
+	}
+
+	public boolean isParallel(Line other) {
+		return (getDirection().cosine() == other.getDirection().cosine())
+				&& (getDirection().cosine() == other.getDirection().cosine());
+	}
+
+	public boolean isAntiparallel(Line other) {
+		return (getDirection().cosine() == -other.getDirection().cosine())
+				&& (getDirection().cosine() == -other.getDirection().cosine());
+	}
+
+	public Vector getIntersection(Line other) {
+		if (!intersect(other))
+			return null;
 		double slope1 = getDirection().slope();
 		double slope2 = other.getDirection().slope();
 		double numerator = slope2 * other.start.x - slope1 * start.x + start.y - other.start.y;
@@ -51,7 +68,7 @@ public class DirectedLine implements Curve {
 
 	@Override
 	public double getTotalArcLength() {
-		return getDirection().magnitude;
+		return getDirection().magnitude();
 	}
 
 	@Override

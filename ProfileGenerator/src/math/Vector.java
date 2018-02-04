@@ -1,22 +1,21 @@
 package math;
 
-public class Vector {
+public final class Vector {
 
 	public static final Vector ZERO = new Vector(0, 0);
 
 	public final double x, y;
-	public final double magnitude;
+
+	private double magnitude = -1;
 
 	public Vector(double x, double y) {
 		this.x = x;
 		this.y = y;
-		this.magnitude = magnitude();
 	}
 
 	public Vector(double angle) {
 		this.x = Math.cos(angle);
 		this.y = Math.sin(angle);
-		this.magnitude = magnitude();
 	}
 
 	public Vector(Vector start, Vector end) {
@@ -31,12 +30,15 @@ public class Vector {
 		return dotProduct(this);
 	}
 
-	private double magnitude() {
-		return Math.sqrt(magnitudeSquared());
+	public double magnitude() {
+		if (magnitude == -1) {
+			magnitude = Math.sqrt(magnitudeSquared());
+		}
+		return magnitude;
 	}
 
 	public double cosine() {
-		return x / magnitude;
+		return x / magnitude();
 	}
 
 	public double slope() {
@@ -44,11 +46,11 @@ public class Vector {
 	}
 
 	public double sine() {
-		return y / magnitude;
+		return y / magnitude();
 	}
 
 	public Vector normalized() {
-		return new Vector(x / magnitude, y / magnitude);
+		return new Vector(x / magnitude(), y / magnitude());
 	}
 
 	public Vector scale(double scale) {

@@ -4,35 +4,51 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
-import pathing.PathCreation;
-import pathing.WayPoint;
 import plot.FalconLinePlot;
 
 public class Test {
 
 	public static void test() {
-		WayPoint first = new WayPoint(0, 0, 0, Math.PI / 2);
-		WayPoint last = new WayPoint(150, 150, 0, 0);
 		Timer timer = new Timer();
 		timer.reset();
-		BezierCurve curve = PathCreation.connectWaypointsWithBezier(first, last, 0.5);
-		// BezierCurve curve = new BezierCurve(new Vector(0, 0), new Vector(0, 5), new
-		// Vector(0, 10), new Vector(5, 10),
-		// new Vector(10, 10));
+
+		BezierCurve curve;
+
+		// WayPoint first = new WayPoint(0, 0, Math.PI / 2, 0);
+		// WayPoint last = new WayPoint(150, 150, 0, 0);
+		// curve = PathCreation.connectWaypointsWithBezier(first, last, 0.5);
+
+		// Vector a = new Vector(0, 0);
+		// Vector a1 = new Vector(0, 50);
+		// Vector b = new Vector(0, 100);
+		// Vector c = new Vector(50, 100);
+		// Vector d = new Vector(100, 100);
+		// Vector e1 = new Vector(100, 50);
+		// Vector e = new Vector(100, 0);
+		// curve = new BezierCurve(a, a1, b, c, d, e1, e);
+
+		Vector a = new Vector(0, 0);
+		Vector a1 = new Vector(0, 50);
+		Vector b = new Vector(0, 100);
+		Vector c = new Vector(50, 100);
+		Vector d = new Vector(100, 100);
+		Vector e1 = new Vector(100, 150);
+		Vector e = new Vector(100, 200);
+		curve = new BezierCurve(a, a1, b, c, d, e1, e);
+
 		timer.printElapsed("Time to make bezier: ");
-		System.out.println(curve);
-		System.out.println(curve.derivative);
-		System.out.println(curve.derivative.derivative);
-		System.out.println();
+
+		// System.out.println(curve);
+		// System.out.println(curve.derivative());
+		// System.out.println(curve.derivative().derivative());
 
 		// LookupTable lut = new LookupTable(d -> d * d + 1, 0, 9, 10);
 		// System.out.println(lut.getOutput(2.5));
-		graphControlPoints(curve);
-		testBezierSpeed(curve);
+		// graphControlPoints(curve);
 		testdeCasteljauSpeed(curve);
 		// graphDeCasteljau(curve);
 		testArcLengthSpeed(curve);
-		graphCurvature(curve);
+		// graphCurvature(curve);
 		// testInterpolation();
 		// testLUTinterpolation();
 		// testLUTinvertibility(curve);
@@ -52,28 +68,6 @@ public class Test {
 		controlPointsGraph.setXLabel("X");
 		controlPointsGraph.setMaxMin(0, 200, 0, 200);
 		controlPointsGraph.setTitle("Control Points");
-		System.out.println();
-	}
-
-	public static void testBezierSpeed(BezierCurve curve) {
-		double testResolution = 5000;
-		Timer timer = new Timer();
-		timer.reset();
-		for (int i = 0; i <= testResolution; i++) {
-			curve.bezier(i / testResolution);
-		}
-		timer.printElapsed("Bezier Time: ");
-		// timer.reset();
-		// for (int i = 0; i <= testResolution; i++) {
-		// curve.bezierX(i / testResolution);
-		// }
-		// timer.printElapsed("Bezier X Time: ");
-		// timer.reset();
-		// for (int i = 0; i <= testResolution; i++) {
-		// curve.bezierY(i / testResolution);
-		// }
-		// timer.printElapsed("Bezier Y Time: ");
-		System.out.println();
 	}
 
 	public static void testdeCasteljauSpeed(BezierCurve curve) {
@@ -94,7 +88,6 @@ public class Test {
 		// curve.deCasteljauY(i / testResolution);
 		// }
 		// timer.printElapsed("deCasteljau Y Time: ");
-		System.out.println();
 	}
 
 	public static void graphDeCasteljau(BezierCurve curve) {
@@ -129,10 +122,12 @@ public class Test {
 	public static void testArcLengthSpeed(BezierCurve curve) {
 
 		System.out.println("Single integral arc length: " + curve.arcLengthIntegral(0, 1));
+		System.out.println("Default table size arc length: " + curve.getArcLength(1));
 		System.out.println("Warning: Inaccurate tests due to java bytecode optimization");
 		Timer timer = new Timer();
 		timer.reset();
 		curve.tToArcLengthTable().setResolution(5000);
+
 		System.out.println("Arc length (5000 pts): " + curve.getArcLength(1));
 		timer.printElapsed("Time to calculate LUT: ");
 
@@ -145,7 +140,6 @@ public class Test {
 		curve.tToArcLengthTable().setResolution(500);
 		System.out.println("Arc length (500 pts): " + curve.getArcLength(1));
 		timer.printElapsed("Time to calculate LUT: ");
-		System.out.println();
 
 		curve.tToArcLengthTable().setResolution(50);
 		System.out.println("Arc length (50 pts): " + curve.getArcLength(1));
@@ -193,28 +187,6 @@ public class Test {
 		fig3.setXLabel("T");
 		fig3.setTitle("Curvature vs t");
 	}
-
-	private static double inputOutput(double in) {
-		return 2 * in;
-	}
-
-	// public static void testLUTinterpolation() {
-	// double lower = 0;
-	// double upper = 5;
-	// int resolution = 1000;
-	// double increment = (upper - lower) / (resolution - 1);
-	// IntegralLookupTable lut = new IntegralLookupTable(Test::inputOutput, 0,
-	// increment * resolution);
-	// for (int i = 0; i < resolution; i++) {
-	// double t = i * increment;
-	// double out = lut.getOutput(t);
-	// double inCalc = lut.getInput(out);
-	// System.out.println("t: " + t);
-	// System.out.printf("\t%.10f, %.10f, %.10f, %n", t, inCalc, t - inCalc);
-	// double realOut = inputOutput(t);
-	// System.out.printf("\t%.10f, %.10f, %.10f, %n", realOut, out, realOut - out);
-	// }
-	// }
 
 	public static void testLUTinvertibility(BezierCurve curve) {
 		int resolution = 5000;

@@ -13,11 +13,11 @@ import java.util.function.Function;
 
 public class LookupTable {
 
-	private static final ExecutorService threadPool = Executors.newCachedThreadPool();
+	private static final ExecutorService threadPool = Executors.newWorkStealingPool(); // Executors.newCachedThreadPool();
 
 	private final BiFunction<Double, Double, Double> deltaY;
 	private final double lowerInput;
-	private final double upperInput;
+	// private final double upperInput;
 	private final double range;
 
 	private int resolution;
@@ -26,7 +26,7 @@ public class LookupTable {
 	private NavigableMap<Double, Double> outIn;
 
 	public LookupTable(BiFunction<Double, Double, Double> deltaY, double lowerInput, double upperInput) {
-		this(deltaY, lowerInput, upperInput, 500);
+		this(deltaY, lowerInput, upperInput, 1000);
 	}
 
 	public LookupTable(BiFunction<Double, Double, Double> function, double lowerInput, double upperInput,
@@ -34,7 +34,7 @@ public class LookupTable {
 		super();
 		this.deltaY = function;
 		this.lowerInput = lowerInput;
-		this.upperInput = upperInput;
+		// this.upperInput = upperInput;
 		this.range = upperInput - lowerInput;
 		setResolution(resolution);
 	}
@@ -68,15 +68,16 @@ public class LookupTable {
 			} catch (InterruptedException | ExecutionException e) {
 				e.printStackTrace();
 			}
-			prevOut = prevOut + out;
-			inOut.put(in, prevOut);
-			outIn.put(prevOut, in);
+			double result = prevOut + out;
+			threadPool.execute(() -> inOut.put(in, result));
+			threadPool.execute(() -> outIn.put(result, in));
+			prevOut = result;
 		}
 	}
 
-	private int inputToIndex(double input) {
-		return (int) Math.floor((input - lowerInput) / increment);
-	}
+	// private int inputToIndex(double input) {
+	// return (int) Math.floor((input - lowerInput) / increment);
+	// }
 
 	public double getOutput(double input) {
 		Double val = inOut.get(input);
