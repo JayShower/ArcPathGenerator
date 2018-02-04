@@ -23,11 +23,11 @@ public class PathCreation {
 		double maxVel = 25;
 		double maxAcc = 15;
 		double width = 10;
-		WayPoint first = new WayPoint(0, 0, Math.PI / 2);
-		WayPoint last = new WayPoint(150, 150, 0);
+		WayPoint first = new WayPoint(0, 0, 0, Math.PI / 2);
+		WayPoint last = new WayPoint(150, 150, 0, 0);
 		BezierCurve curve = connectWaypointsWithBezier(first, last);
 		timer.printElapsed("Bezier elapsed: ");
-		PathSegment segment = new PathSegment(last, last, 0, curve);
+		PathSegment segment = new PathSegment(first, last, curve);
 
 		// DirectedLine line = new DirectedLine(last, last.add(last.heading.scale(30)));
 		// PathSegment segment2 = new PathSegment(line.start, line.end, 0, line);
@@ -122,14 +122,18 @@ public class PathCreation {
 
 		MotionState previousState = new MotionState(0, 0, 0, 0);
 
-		MotionProfileGoal goalState = new MotionProfileGoal(pathSegments[0].curve.getTotalArcLength(),
-				pathSegments[0].absVelocity, CompletionBehavior.OVERSHOOT);
+		double goalVel = pathSegments[0].end.vel;
+		double goalPos = pathSegments[0].curve.getTotalArcLength() * Math.signum(goalVel);
+		MotionProfileGoal goalState = new MotionProfileGoal(goalPos,
+				Math.abs(goalVel), CompletionBehavior.OVERSHOOT);
 		MotionProfile currentProfile = GenerateMotionProfile.generateStraightMotionProfile(constraints, goalState,
 				previousState);
 		previousState = currentProfile.endState();
 
 		for (int i = 1; i < pathSegments.length; i++) {
-			goalState = new MotionProfileGoal(pathSegments[i].curve.getTotalArcLength(), pathSegments[0].absVelocity,
+			goalVel = pathSegments[i].end.vel;
+			goalPos = pathSegments[i].curve.getTotalArcLength() * Math.signum(goalVel);
+			goalState = new MotionProfileGoal(goalPos, goalVel,
 					CompletionBehavior.OVERSHOOT);
 			currentProfile.appendProfile(
 					GenerateMotionProfile.generateStraightMotionProfile(constraints, goalState, previousState));

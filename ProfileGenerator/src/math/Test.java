@@ -11,8 +11,8 @@ import plot.FalconLinePlot;
 public class Test {
 
 	public static void test() {
-		WayPoint first = new WayPoint(0, 0, Math.PI / 2);
-		WayPoint last = new WayPoint(150, 150, 0);
+		WayPoint first = new WayPoint(0, 0, 0, Math.PI / 2);
+		WayPoint last = new WayPoint(150, 150, 0, 0);
 		Timer timer = new Timer();
 		timer.reset();
 		BezierCurve curve = PathCreation.connectWaypointsWithBezier(first, last, 0.5);
