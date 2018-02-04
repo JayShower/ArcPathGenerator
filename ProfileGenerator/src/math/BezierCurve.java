@@ -5,9 +5,10 @@ import java.util.Arrays;
 public final class BezierCurve implements Curve {
 
 	public final Vector[] controlPoints;
-	private BezierCurve derivative;
+	private BezierCurve derivative = null;
 	public final double[] controlPointsX;
 	public final double[] controlPointsY;
+	private LookupTable tToArcLengthTable = null;
 
 	/**
 	 * Makes a new Bezier Curve
@@ -29,11 +30,6 @@ public final class BezierCurve implements Curve {
 		for (int i = 0; i < controlPoints.length; i++) {
 			controlPointsX[i] = controlPoints[i].x;
 			controlPointsY[i] = controlPoints[i].y;
-		}
-		if (isTop) {
-			// t.reset();
-			this.createTToArcLengthTable();
-			// t.printElapsed("Time calculating LUT: ");
 		}
 	}
 
@@ -65,10 +61,8 @@ public final class BezierCurve implements Curve {
 	}
 
 	public BezierCurve derivative() {
-		if (derivative == null) {
+		if (derivative == null)
 			derivative = calculateDerivative();
-			// System.out.println("calculated derivative");
-		}
 		return derivative;
 	}
 
@@ -80,15 +74,11 @@ public final class BezierCurve implements Curve {
 		return Util.gaussQuadIntegrate(this::arcLengthDerivative, lower, upper);
 	}
 
-	private LookupTable tToArcLengthTable = null;
-
-	private void createTToArcLengthTable() {
-		tToArcLengthTable = new LookupTable(this::arcLengthIntegral, 0, 1);
-	}
-
 	public LookupTable tToArcLengthTable() {
-		if (tToArcLengthTable == null)
-			createTToArcLengthTable();
+		if (tToArcLengthTable == null) {
+			tToArcLengthTable = new LookupTable(this::arcLengthIntegral, 0, 1);
+			tToArcLengthTable.waitToBeDone();
+		}
 		return tToArcLengthTable;
 	}
 
