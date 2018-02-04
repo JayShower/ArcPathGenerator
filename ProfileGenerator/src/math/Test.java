@@ -18,23 +18,23 @@ public class Test {
 		// WayPoint last = new WayPoint(150, 150, 0, 0);
 		// curve = PathCreation.connectWaypointsWithBezier(first, last, 0.5);
 
-		// Vector a = new Vector(0, 0);
-		// Vector a1 = new Vector(0, 50);
-		// Vector b = new Vector(0, 100);
-		// Vector c = new Vector(50, 100);
-		// Vector d = new Vector(100, 100);
-		// Vector e1 = new Vector(100, 50);
-		// Vector e = new Vector(100, 0);
-		// curve = new BezierCurve(a, a1, b, c, d, e1, e);
-
 		Vector a = new Vector(0, 0);
 		Vector a1 = new Vector(0, 50);
 		Vector b = new Vector(0, 100);
 		Vector c = new Vector(50, 100);
 		Vector d = new Vector(100, 100);
-		Vector e1 = new Vector(100, 150);
-		Vector e = new Vector(100, 200);
+		Vector e1 = new Vector(100, 50);
+		Vector e = new Vector(100, 0);
 		curve = new BezierCurve(a, a1, b, c, d, e1, e);
+
+		// Vector a = new Vector(0, 0);
+		// Vector a1 = new Vector(0, 50);
+		// Vector b = new Vector(0, 100);
+		// Vector c = new Vector(50, 100);
+		// Vector d = new Vector(100, 100);
+		// Vector e1 = new Vector(100, 150);
+		// Vector e = new Vector(100, 200);
+		// curve = new BezierCurve(a, a1, b, c, d, e1, e);
 
 		timer.printElapsed("Time to make bezier: ");
 
@@ -45,13 +45,12 @@ public class Test {
 		// LookupTable lut = new LookupTable(d -> d * d + 1, 0, 9, 10);
 		// System.out.println(lut.getOutput(2.5));
 		// graphControlPoints(curve);
-		testdeCasteljauSpeed(curve);
+		// testdeCasteljauSpeed(curve);
 		// graphDeCasteljau(curve);
-		testArcLengthSpeed(curve);
+		// testArcLengthSpeed(curve);
 		// graphCurvature(curve);
-		// testInterpolation();
-		// testLUTinterpolation();
 		// testLUTinvertibility(curve);
+		testPathCreation();
 	}
 
 	public static void graphControlPoints(BezierCurve curve) {
@@ -120,26 +119,34 @@ public class Test {
 	}
 
 	public static void testArcLengthSpeed(BezierCurve curve) {
-
-		System.out.println("Single integral arc length: " + curve.arcLengthIntegral(0, 1));
-		System.out.println("Default table size arc length: " + curve.getArcLength(1));
-		System.out.println("Warning: Inaccurate tests due to java bytecode optimization");
 		Timer timer = new Timer();
+		System.out.println("Single integral arc length: " + curve.arcLengthIntegral(0, 1));
+		System.out.println();
+		timer.reset();
+		System.out.println("Default table size arc length: " + curve.getArcLength(1));
+		timer.printElapsed("Time to calculate with default size: ");
+		System.out.println();
+
+		System.out.println("Warning: Inaccurate tests due to java bytecode optimization");
+		System.out.println();
+
 		timer.reset();
 		curve.tToArcLengthTable().setResolution(5000);
-
 		System.out.println("Arc length (5000 pts): " + curve.getArcLength(1));
 		timer.printElapsed("Time to calculate LUT: ");
+		System.out.println();
 
 		timer.reset();
 		curve.tToArcLengthTable().setResolution(2500);
 		System.out.println("Arc length (2500 pts): " + curve.getArcLength(1));
 		timer.printElapsed("Time to calculate LUT: ");
+		System.out.println();
 
 		timer.reset();
 		curve.tToArcLengthTable().setResolution(500);
 		System.out.println("Arc length (500 pts): " + curve.getArcLength(1));
 		timer.printElapsed("Time to calculate LUT: ");
+		System.out.println();
 
 		curve.tToArcLengthTable().setResolution(50);
 		System.out.println("Arc length (50 pts): " + curve.getArcLength(1));
@@ -204,6 +211,9 @@ public class Test {
 			// System.out.printf("%.12f, %.12f, %.12f, %.12f%n", inputs[i], inputs2[i],
 			// error[i], distance[i]);
 		}
+	}
+
+	public static void testPathCreation() {
 
 	}
 

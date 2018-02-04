@@ -77,8 +77,8 @@ public final class BezierCurve implements Curve {
 	public LookupTable tToArcLengthTable() {
 		if (tToArcLengthTable == null) {
 			tToArcLengthTable = new LookupTable(this::arcLengthIntegral, 0, 1);
-			tToArcLengthTable.waitToBeDone();
 		}
+		tToArcLengthTable.waitToBeDone();
 		return tToArcLengthTable;
 	}
 

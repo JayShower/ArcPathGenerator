@@ -1,9 +1,9 @@
 package math;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -12,9 +12,17 @@ import java.util.concurrent.Future;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+/*
+ * Warning: although this class uses multithreading, setResolution SHOULD NOT
+ * be called from a thread different than the one using it, because then it could
+ * be in the middle of creating the table when trying to access it
+ */
+
 public class LookupTable {
 
+	public static final int DEFAULT_SIZE = 1000;
 	private static final ExecutorService threadPool = Executors.newWorkStealingPool(); // Executors.newCachedThreadPool();
+	private static final ExecutorService singleThread = Executors.newSingleThreadExecutor();
 
 	private final BiFunction<Double, Double, Double> deltaY;
 	private final double lowerInput;
@@ -23,12 +31,12 @@ public class LookupTable {
 
 	private int resolution;
 	private double increment;
-	private List<Future<Double>> puts;
+	private Future doneChecker;
 	private NavigableMap<Double, Double> inOut;
 	private NavigableMap<Double, Double> outIn;
 
 	public LookupTable(BiFunction<Double, Double, Double> deltaY, double lowerInput, double upperInput) {
-		this(deltaY, lowerInput, upperInput, 200);
+		this(deltaY, lowerInput, upperInput, DEFAULT_SIZE);
 	}
 
 	public LookupTable(BiFunction<Double, Double, Double> function, double lowerInput, double upperInput,
@@ -52,22 +60,23 @@ public class LookupTable {
 	}
 
 	private void makeLUT() {
-		ArrayList<Future<Double>> tasks = new ArrayList<>(resolution);
+		Queue<Future<Double>> tasks = new LinkedList<>();
 		tasks.add(threadPool.submit(() -> 0.0));
 		for (int i = 1; i < resolution; i++) {
 			double low = indexToInput(i - 1);
 			double up = indexToInput(i);
 			tasks.add(threadPool.submit(() -> deltaY.apply(low, up)));
 		}
-		puts = new ArrayList<>(resolution * 2);
+		Queue<Future<Double>> puts = new LinkedList<>();
 		inOut = new ConcurrentSkipListMap<>();
 		outIn = new ConcurrentSkipListMap<>();
 		double prevOut = 0.0;
-		for (int i = 0; i < resolution; i++) {
+		int i = 0;
+		while (!tasks.isEmpty()) {
 			double in = indexToInput(i);
 			double out = 0;
 			try {
-				out = tasks.get(i).get();
+				out = tasks.poll().get(); // blocking
 			} catch (InterruptedException | ExecutionException e) {
 				e.printStackTrace();
 			}
@@ -75,25 +84,30 @@ public class LookupTable {
 			puts.add(threadPool.submit(() -> inOut.put(in, result)));
 			puts.add(threadPool.submit(() -> outIn.put(result, in)));
 			prevOut = result;
+			i++;
 		}
+
+		// puts list SHOULD have all the inOut/outIn tasks by now
+		doneChecker = singleThread.submit(() -> {
+			while (!puts.isEmpty()) { // remove all done, check again
+				puts.removeIf((f) -> f.isDone());
+			}
+		});
+
 	}
 
 	public void waitToBeDone() {
-		for (Future<Double> f : puts) {
-			try {
-				f.get();
-			} catch (InterruptedException | ExecutionException e) {
-				e.printStackTrace();
-			}
+		try {
+			doneChecker.get();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			e.printStackTrace();
 		}
 	}
 
 	public boolean checkIfDone() {
-		boolean allDone = true;
-		for (Future<Double> f : puts) {
-			allDone &= f.isDone();
-		}
-		return allDone;
+		return doneChecker.isDone();
 	}
 
 	// private int inputToIndex(double input) {

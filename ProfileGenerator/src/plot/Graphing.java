@@ -23,9 +23,9 @@ public class Graphing {
 		int currentSegment = 0;
 		for (int i = 0; i < times.length; i++) {
 			times[i] = i * dt;
-			double pos = center.profile.stateByTimeClamped(i * dt).pos();
-			if (pos > center.pathSegments[currentSegment].curve.getTotalArcLength()) {
-				if (currentSegment + 1 >= center.pathSegments.length)
+			double pos = center.getProfile().stateByTimeClamped(i * dt).pos();
+			if (pos > center.getSegments()[currentSegment].curve.getTotalArcLength()) {
+				if (currentSegment + 1 >= center.getSegments().length)
 					break;
 				currentSegment++;
 			}
@@ -35,14 +35,14 @@ public class Graphing {
 			rightVel[i] = sides.right[i].velocity;
 			leftAcc[i] = sides.left[i].acceleration;
 			rightAcc[i] = sides.right[i].acceleration;
-			Vector v = center.pathSegments[currentSegment].curve.getPointAtArcLength(pos);
+			Vector v = center.getSegments()[currentSegment].curve.getPointAtArcLength(pos);
 			x[i] = v.x;
 			y[i] = v.y;
 			// System.out.println(v.x + ", " + v.y);
 			// Vector v2 = curve.getPointAtArcLength(pos);
 			// System.out.println(v2.x + ", " + v2.y);
-			curvatures[i] = center.pathSegments[currentSegment].curve
-					.getCurvatureAtArcLength(center.profile.stateByTime(i * dt).get().pos()) * -200;
+			curvatures[i] = center.getSegments()[currentSegment].curve
+					.getCurvatureAtArcLength(center.getProfile().stateByTime(i * dt).get().pos()) * -200;
 		}
 		// plot1(x, y, "My X vs Y");
 		plot2(times, leftPos, rightPos, "My Pos vs Time, L=B,R=R");

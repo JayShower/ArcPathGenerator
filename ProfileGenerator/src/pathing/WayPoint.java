@@ -63,4 +63,12 @@ public final class WayPoint {
 		this.vel = vel;
 	}
 
+	public WayPoint shift(Vector translation, double rotation, Vector point) {
+		double dx = position.x - point.x;
+		double dy = position.y - point.y;
+		Vector pos = new Vector(dx, dy).rotate(rotation).add(point);
+		Vector head = heading.rotate(rotation);
+		return new WayPoint(pos, head, vel);
+	}
+
 }
