@@ -109,16 +109,17 @@ public final class Vector {
 		return String.format("%.2f, %.2f", x, y);
 	}
 
-	public static final double headingE = 1.0e-9;
+	public static final double headingE = 1.0e-12;
 
 	public boolean headingIsEqual(Vector other) {
-		return Util.equals(sine(), other.sine(), headingE) && Util.equals(cosine(), other.cosine(), headingE);
+		return Util.epsilonEquals(sine(), other.sine(), headingE)
+				&& Util.epsilonEquals(cosine(), other.cosine(), headingE);
 	}
 
-	public static final double positionE = 1.0e-9;
+	public static final double positionE = 1.0e-12;
 
 	public boolean positionIsEqual(Vector other) {
-		return Util.equals(x, other.x, positionE) && Util.equals(y, other.y, positionE);
+		return Util.epsilonEquals(x, other.x, positionE) && Util.epsilonEquals(y, other.y, positionE);
 	}
 
 }

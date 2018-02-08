@@ -4,11 +4,11 @@ import math.Curve;
 
 public class PathSegment {
 
-	public final WayPoint start;
-	public final WayPoint end;
+	public final Waypoint start;
+	public final Waypoint end;
 	public final Curve curve;
 
-	public PathSegment(WayPoint start, WayPoint end, Curve curve) {
+	public PathSegment(Waypoint start, Waypoint end, Curve curve) {
 		this.start = start;
 		this.end = end;
 		this.curve = curve;

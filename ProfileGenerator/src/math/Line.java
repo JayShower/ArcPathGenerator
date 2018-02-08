@@ -1,6 +1,6 @@
 package math;
 
-import pathing.WayPoint;
+import pathing.Waypoint;
 
 public class Line implements Curve {
 
@@ -13,7 +13,7 @@ public class Line implements Curve {
 		this.end = end;
 	}
 
-	public Line(WayPoint w) {
+	public Line(Waypoint w) {
 		start = w.position;
 		end = w.position.add(w.heading);
 		direction = w.heading;
@@ -40,18 +40,8 @@ public class Line implements Curve {
 		return getPointAtD(percent * getDirection().magnitude());
 	}
 
-	public boolean intersect(Line other) {
-		return getDirection().slope() != other.getDirection().slope();
-	}
-
-	public boolean isParallel(Line other) {
-		return (getDirection().cosine() == other.getDirection().cosine())
-				&& (getDirection().cosine() == other.getDirection().cosine());
-	}
-
-	public boolean isAntiparallel(Line other) {
-		return (getDirection().cosine() == -other.getDirection().cosine())
-				&& (getDirection().cosine() == -other.getDirection().cosine());
+	private boolean intersect(Line other) {
+		return !Util.epsilonEquals(getDirection().slope(), other.getDirection().slope());
 	}
 
 	public Vector getIntersection(Line other) {

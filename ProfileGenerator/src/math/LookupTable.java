@@ -1,9 +1,9 @@
 package math;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
-import java.util.Queue;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -20,7 +20,7 @@ import java.util.function.Function;
 
 public class LookupTable {
 
-	public static final int DEFAULT_SIZE = 1000;
+	public static final int DEFAULT_SIZE = 500;
 	private static final ExecutorService threadPool = Executors.newWorkStealingPool(); // Executors.newCachedThreadPool();
 	private static final ExecutorService singleThread = Executors.newSingleThreadExecutor();
 
@@ -31,7 +31,7 @@ public class LookupTable {
 
 	private int resolution;
 	private double increment;
-	private Future doneChecker;
+	private Future<?> doneChecker;
 	private NavigableMap<Double, Double> inOut;
 	private NavigableMap<Double, Double> outIn;
 
@@ -60,40 +60,32 @@ public class LookupTable {
 	}
 
 	private void makeLUT() {
-		Queue<Future<Double>> tasks = new LinkedList<>();
-		tasks.add(threadPool.submit(() -> 0.0));
-		for (int i = 1; i < resolution; i++) {
-			double low = indexToInput(i - 1);
-			double up = indexToInput(i);
-			tasks.add(threadPool.submit(() -> deltaY.apply(low, up)));
-		}
-		Queue<Future<Double>> puts = new LinkedList<>();
 		inOut = new ConcurrentSkipListMap<>();
+		inOut.put(lowerInput, 0.0);
 		outIn = new ConcurrentSkipListMap<>();
-		double prevOut = 0.0;
-		int i = 0;
-		while (!tasks.isEmpty()) {
-			double in = indexToInput(i);
-			double out = 0;
-			try {
-				out = tasks.poll().get(); // blocking
-			} catch (InterruptedException | ExecutionException e) {
-				e.printStackTrace();
-			}
-			double result = prevOut + out;
-			puts.add(threadPool.submit(() -> inOut.put(in, result)));
-			puts.add(threadPool.submit(() -> outIn.put(result, in)));
-			prevOut = result;
-			i++;
+		outIn.put(0.0, lowerInput);
+
+		List<Future<Double>> puts = new ArrayList<>(resolution);
+		puts.add(threadPool.submit(() -> 0.0));
+
+		for (int i = 1; i < resolution; i++) {
+			int index = i; // need to do this for lambda expression below
+			double prevIn = indexToInput(index - 1);
+			double currentIn = indexToInput(index);
+
+			Future<Double> ds = threadPool.submit(() -> deltaY.apply(prevIn, currentIn));
+
+			Future<Double> putTask = singleThread.submit(() -> {
+				double change = ds.get();
+				double prevResult = puts.get(index - 1).get();
+				double result = prevResult + change;
+				inOut.put(currentIn, result);
+				outIn.put(result, currentIn);
+				return change + prevResult;
+			});
+			puts.add(putTask);
 		}
-
-		// puts list SHOULD have all the inOut/outIn tasks by now
-		doneChecker = singleThread.submit(() -> {
-			while (!puts.isEmpty()) { // remove all done, check again
-				puts.removeIf((f) -> f.isDone());
-			}
-		});
-
+		doneChecker = puts.get(resolution - 1);
 	}
 
 	public void waitToBeDone() {
@@ -115,53 +107,54 @@ public class LookupTable {
 	// }
 
 	public double getOutput(double input) {
-		Double val = inOut.get(input);
-		if (val != null) {
-			return val;
+		Double gotVal = inOut.get(input);
+		if (gotVal != null) {
+			return gotVal;
 		}
+
 		Entry<Double, Double> lower = inOut.floorEntry(input);
 		Entry<Double, Double> upper = inOut.ceilingEntry(input);
-		if (lower == null)
+
+		if (lower == null && upper == null) {
+			System.err.println("ERROR: BOTH SHOULDN'T BE NULL");
+			return 0.0;
+		} else if (lower == null) {
 			return upper.getValue();
-		if (upper == null)
+
+		} else if (upper == null) {
 			return lower.getValue();
-		Function<Double, Double> f = d -> Util.linearInterpolate(lower.getKey(), lower.getValue(),
-				upper.getKey(),
+		}
+
+		Function<Double, Double> f = d -> Util.linearInterpolate(lower.getKey(), lower.getValue(), upper.getKey(),
 				upper.getValue(), d);
+
 		return inOut.computeIfAbsent(input, f);
 	}
 
+	// basically does an interpolation search on the tree
 	public double getInput(double output) {
-		Double val = outIn.get(output);
-		if (val != null) {
-			return val;
+		Double gotVal = outIn.get(output);
+		if (gotVal != null) {
+			return gotVal;
 		}
+
 		Entry<Double, Double> lower = outIn.floorEntry(output);
 		Entry<Double, Double> upper = outIn.ceilingEntry(output);
-		if (lower == null)
+
+		if (lower == null && upper == null) {
+			System.err.println("ERROR: BOTH SHOULDN'T BE NULL");
+			return 0.0;
+		} else if (lower == null) {
 			return upper.getValue();
-		if (upper == null)
+
+		} else if (upper == null) {
 			return lower.getValue();
-		Function<Double, Double> f = d -> Util.linearInterpolate(lower.getKey(), lower.getValue(),
-				upper.getKey(),
-				upper.getValue(), d);
-		return outIn.computeIfAbsent(output,
-				f);
-	}
-
-	// private boolean isIncreasing() {
-	// List<Double> list = new ArrayList<Double>(inOut.values());
-	// for (int i = 1; i < list.size(); i++) {
-	// if (list.get(i) < list.get(i - 1))
-	// return false;
-	// }
-	// return true;
-	// }
-
-	public void printTable() {
-		for (int i = 0; i < resolution; i++) {
-			System.out.println(i + ": " + inOut.get(indexToInput(i)));
 		}
+
+		Function<Double, Double> f = d -> Util.linearInterpolate(lower.getKey(), lower.getValue(), upper.getKey(),
+				upper.getValue(), d);
+
+		return outIn.computeIfAbsent(output, f);
 	}
 
 }

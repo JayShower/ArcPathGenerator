@@ -1,8 +1,9 @@
 package pathing;
 
+import math.Util;
 import math.Vector;
 
-public final class WayPoint {
+public final class Waypoint {
 
 	public static final Vector RIGHT = new Vector(0);
 	public static final Vector STRAIGHT = new Vector(Math.PI / 2);
@@ -26,7 +27,7 @@ public final class WayPoint {
 	 * @param vel
 	 *            absolute velocity of the robot as it passes through this waypoint.
 	 */
-	public WayPoint(double x, double y, double heading, double vel) {
+	public Waypoint(double x, double y, double heading, double vel) {
 		this(new Vector(x, y), new Vector(heading), vel);
 	}
 
@@ -42,7 +43,7 @@ public final class WayPoint {
 	 *            way front of robot is facing, in radians. Positve angle is upwards
 	 *            from x axis. Must be between 0 and 2pi
 	 */
-	public WayPoint(Vector position, double heading, double vel) {
+	public Waypoint(Vector position, double heading, double vel) {
 		this(position, new Vector(heading), heading);
 	}
 
@@ -57,18 +58,43 @@ public final class WayPoint {
 	 * @param heading
 	 *            Unit vector in direction of robot heading.
 	 */
-	public WayPoint(Vector position, Vector heading, double vel) {
+	public Waypoint(Vector position, Vector heading, double vel) {
 		this.position = position;
-		this.heading = heading;
+		this.heading = heading.normalized();
 		this.vel = vel;
 	}
 
-	public WayPoint shift(Vector translation, double rotation, Vector point) {
+	public Waypoint shift(Vector translation, double rotation, Vector point) {
 		double dx = position.x - point.x;
 		double dy = position.y - point.y;
 		Vector pos = new Vector(dx, dy).rotate(rotation).add(point);
 		Vector head = heading.rotate(rotation);
-		return new WayPoint(pos, head, vel);
+		return new Waypoint(pos, head, vel);
+	}
+
+	public static boolean areCollinear(Waypoint a, Waypoint b) {
+		if (a.heading.equals(b.heading)) {
+			double dx = b.position.x - a.position.x;
+			double dy = b.position.y - a.position.y;
+			Vector direction = new Vector(dx, dy);
+			return a.heading.equals(direction.normalized());
+		} else {
+			return false;
+		}
+	}
+
+	public static boolean doIntersect(Waypoint a, Waypoint b) {
+		return !Util.epsilonEquals(a.heading.slope(), b.heading.slope());
+	}
+
+	public static boolean areParallel(Waypoint a, Waypoint b) {
+		return a.heading.equals(b.heading);
+	}
+
+	public static boolean areAntiparallel(Waypoint a, Waypoint b) {
+		boolean cosine = Util.epsilonEquals(a.heading.cosine(), -b.heading.cosine());
+		boolean sine = Util.epsilonEquals(a.heading.sine(), -b.heading.sine());
+		return cosine && sine;
 	}
 
 }

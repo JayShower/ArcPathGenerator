@@ -26,11 +26,11 @@ public final class Path {
 
 	public final boolean driveForwards;
 	private final ArrayList<PathSegment> segments = new ArrayList<>();
-	private WayPoint prev;
+	private Waypoint prev;
 	private MotionProfile profile;
 
 	public Path(boolean driveForwards) {
-		this(new WayPoint(Vector.ZERO, WayPoint.STRAIGHT, 0), driveForwards);
+		this(new Waypoint(Vector.ZERO, Waypoint.STRAIGHT, 0), driveForwards);
 	}
 
 	// you might want to use this constructor if your robot starts at an angle to
@@ -40,31 +40,34 @@ public final class Path {
 	/**
 	 * 
 	 * @param first
-	 *            first WayPoint
+	 *            first Waypoint
 	 * @param driveForwards
 	 *            if this path has the robot drive forwards or backwards
 	 */
-	public Path(WayPoint first, boolean driveForwards) {
+	public Path(Waypoint first, boolean driveForwards) {
 		this.driveForwards = driveForwards;
 		this.prev = first;
 	}
 
-	public void addWaypoint(WayPoint w) {
+	public void addWaypoint(Waypoint w) {
 		addWaypoint(w, 0.5);
 	}
 
-	public void addWaypoint(WayPoint w, double midControlPercent) {
-		Line l1 = new Line(prev);
-		Line l2 = new Line(w);
-		if (l1.isParallel(l2))
-			addIntersectingAboveOrParallel(w, midControlPercent);
-		else if (l1.isAntiparallel(l2))
-			addIntersectingBehindOrAntiparallel(w, midControlPercent);
-		else
-			addIntersectingBelow(w, midControlPercent);
+	public void addWaypoint(Waypoint w, double midControlPercent) {
+		if (Waypoint.areCollinear(w, prev)) {
+
+		} else if (Waypoint.doIntersect(w, prev)) {
+
+		} else if (Waypoint.areParallel(w, prev)) {
+
+		} else if (Waypoint.areAntiparallel(w, prev)) {
+
+		} else {
+			System.err.println("SHOULD NOT BE HERE IN ADD WAYPOINT METHOD");
+		}
 	}
 
-	private void addIntersectingBelow(WayPoint w, double n) {
+	private void addIntersectingBelow(Waypoint w, double n) {
 		Line lineA = new Line(prev);
 		Line lineB = new Line(w);
 		Vector intersection = lineA.getIntersection(lineB);
@@ -80,7 +83,7 @@ public final class Path {
 		prev = w;
 	}
 
-	private void addIntersectingAboveOrParallel(WayPoint w, double n) {
+	private void addIntersectingAboveOrParallel(Waypoint w, double n) {
 		// could have middle point be along direction at n, or be parallel at n
 		// right now doing middle point along direction at n
 		Vector v1 = prev.position;
@@ -98,7 +101,7 @@ public final class Path {
 		prev = w;
 	}
 
-	private void addIntersectingBehindOrAntiparallel(WayPoint w, double n) {
+	private void addIntersectingBehindOrAntiparallel(Waypoint w, double n) {
 		Vector v1 = prev.position;
 		Vector v7 = w.position;
 		Line l17 = new Line(v1, v7);
@@ -125,13 +128,12 @@ public final class Path {
 	public void generateProfile(double maxAcceleration, double maxVelocity) {
 		MotionProfileConstraints constraints = new MotionProfileConstraints(maxVelocity, maxAcceleration);
 
-		// System.out.println(pathSegments[0].curve);
-		double goalPos = driveForwards ? segments.get(0).curve.getTotalArcLength()
-				: -segments.get(0).curve.getTotalArcLength();
 		MotionState previousState = new MotionState(0, 0, 0, maxAcceleration);
-		// System.out.println("Goal pos: " + goalPos);
-		MotionProfileGoal goalState = new MotionProfileGoal(goalPos,
-				Math.abs(segments.get(0).end.vel), CompletionBehavior.OVERSHOOT);
+		double goalPos = driveForwards ? segments.get(0).curve.getTotalArcLength()
+				: -segments.get(0).curve.getTotalArcLength() + previousState.pos();
+
+		MotionProfileGoal goalState = new MotionProfileGoal(goalPos, Math.abs(segments.get(0).end.vel),
+				CompletionBehavior.OVERSHOOT);
 		MotionProfile currentProfile = GenerateMotionProfile.generateStraightMotionProfile(constraints, goalState,
 				previousState);
 		previousState = currentProfile.endState();
@@ -139,8 +141,7 @@ public final class Path {
 		for (int i = 1; i < segments.size(); i++) {
 			goalPos = driveForwards ? segments.get(i).curve.getTotalArcLength()
 					: -segments.get(i).curve.getTotalArcLength();
-			goalState = new MotionProfileGoal(goalPos, segments.get(i).end.vel,
-					CompletionBehavior.OVERSHOOT);
+			goalState = new MotionProfileGoal(goalPos, segments.get(i).end.vel, CompletionBehavior.OVERSHOOT);
 			currentProfile.appendProfile(
 					GenerateMotionProfile.generateStraightMotionProfile(constraints, goalState, previousState));
 			previousState = currentProfile.endState();

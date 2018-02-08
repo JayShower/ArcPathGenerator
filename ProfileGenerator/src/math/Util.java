@@ -70,8 +70,12 @@ public class Util {
 		return d;
 	}
 
-	public static boolean equals(double v1, double v2, double epsilon) {
+	public static boolean epsilonEquals(double v1, double v2, double epsilon) {
 		return Math.abs(v1 - v2) < epsilon;
+	}
+
+	public static boolean epsilonEquals(double v1, double v2) {
+		return epsilonEquals(v1, v2, 1.0e-12);
 	}
 
 	public static double linearInterpolate(double x0, double y0, double x1, double y1, double x) {
@@ -82,4 +86,5 @@ public class Util {
 	public static double curvature2d(double x1, double x2, double y1, double y2) {
 		return (x1 * y2 - y1 * x2) / Math.pow(x1 * x1 + y1 * y1, 1.5);
 	}
+
 }
