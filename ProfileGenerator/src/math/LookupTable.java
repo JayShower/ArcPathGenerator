@@ -20,7 +20,7 @@ import java.util.function.Function;
 
 public class LookupTable {
 
-	public static final int DEFAULT_SIZE = 500;
+	public static final int DEFAULT_SIZE = 250;
 	private static final ExecutorService threadPool = Executors.newWorkStealingPool(); // Executors.newCachedThreadPool();
 	private static final ExecutorService singleThread = Executors.newSingleThreadExecutor();
 

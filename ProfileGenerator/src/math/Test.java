@@ -4,7 +4,11 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
+import pathing.Path;
+import pathing.Path.TrajectoryHolder;
+import pathing.Waypoint;
 import plot.FalconLinePlot;
+import plot.Graphing;
 
 public class Test {
 
@@ -131,24 +135,24 @@ public class Test {
 		System.out.println();
 
 		timer.reset();
-		curve.tToArcLengthTable().setResolution(5000);
+		curve.getTable().setResolution(5000);
 		System.out.println("Arc length (5000 pts): " + curve.getArcLength(1));
 		timer.printElapsed("Time to calculate LUT: ");
 		System.out.println();
 
 		timer.reset();
-		curve.tToArcLengthTable().setResolution(2500);
+		curve.getTable().setResolution(2500);
 		System.out.println("Arc length (2500 pts): " + curve.getArcLength(1));
 		timer.printElapsed("Time to calculate LUT: ");
 		System.out.println();
 
 		timer.reset();
-		curve.tToArcLengthTable().setResolution(500);
+		curve.getTable().setResolution(500);
 		System.out.println("Arc length (500 pts): " + curve.getArcLength(1));
 		timer.printElapsed("Time to calculate LUT: ");
 		System.out.println();
 
-		curve.tToArcLengthTable().setResolution(50);
+		curve.getTable().setResolution(50);
 		System.out.println("Arc length (50 pts): " + curve.getArcLength(1));
 		timer.printElapsed("Time to calculate LUT: ");
 		System.out.println();
@@ -214,7 +218,17 @@ public class Test {
 	}
 
 	public static void testPathCreation() {
-
+		Waypoint a = new Waypoint(5, 5, Math.PI / 2, 0);
+		Waypoint b = new Waypoint(155, 155, 0, 0);
+		Path p = new Path(a, true);
+		p.addWaypoint(b);
+		double dt = 0.01;
+		p.generateProfile(50, 25);
+		TrajectoryHolder sides = p.getTrajectoryPoints(15, dt);
+		System.out.println(p.getSegments().length);
+		System.out.println(p.getProfile().endPos());
+		// Test.graphDeCasteljau((BezierCurve) p.getSegments()[0].curve);
+		Graphing.graphMyPath(p, p.getTrajectoryPoints(15, dt), dt);
 	}
 
 	public static void main(String[] args) {

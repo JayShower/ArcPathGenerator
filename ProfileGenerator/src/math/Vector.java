@@ -96,6 +96,16 @@ public final class Vector {
 		return new Vector(newX, newY);
 	}
 
+	public double getRelativeAngle(Vector other) {
+		double dot = this.dotProduct(other);
+		double mags = this.magnitude() * other.magnitude();
+		return Math.acos(dot / mags);
+	}
+
+	public double getAbsoluteAngle() {
+		return Math.atan2(y, x);
+	}
+
 	@Override
 	public boolean equals(Object other) {
 		if (!(other instanceof Vector))

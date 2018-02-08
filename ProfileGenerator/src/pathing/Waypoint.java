@@ -36,12 +36,11 @@ public final class Waypoint {
 	 * @param position
 	 *            Robot position. Positive x is towards right of robot, positive y
 	 *            is forwards <br>
-	 * @param vel
-	 *            velocity of the robot as it passes through this waypoint. Make
-	 *            sure to specify positive and negative velocity.
 	 * @param heading
 	 *            way front of robot is facing, in radians. Positve angle is upwards
 	 *            from x axis. Must be between 0 and 2pi
+	 * @param vel
+	 *            absolute velocity of the robot as it passes through this waypoint.
 	 */
 	public Waypoint(Vector position, double heading, double vel) {
 		this(position, new Vector(heading), heading);
@@ -52,11 +51,10 @@ public final class Waypoint {
 	 * @param position
 	 *            Robot position. Positive x is towards right of robot, positive y
 	 *            is forwards
-	 * @param vel
-	 *            velocity of the robot as it passes through this waypoint. Make
-	 *            sure to specify positive and negative velocity.
 	 * @param heading
-	 *            Unit vector in direction of robot heading.
+	 *            Vector in direction of robot heading.
+	 * @param vel
+	 *            absolute velocity of the robot as it passes through this waypoint.
 	 */
 	public Waypoint(Vector position, Vector heading, double vel) {
 		this.position = position;

@@ -2,14 +2,14 @@ package plot;
 
 import java.awt.Color;
 
-import math.BezierCurve;
-import math.Vector;
 import pathing.Path;
 import pathing.Path.TrajectoryHolder;
+import pathing.TrajectoryPoint;
 
 public class Graphing {
 
-	public static void graphMyPath(Path center, TrajectoryHolder sides, double dt, BezierCurve curve) {
+	public static void graphMyPath(Path center, TrajectoryHolder sides, double dt) {
+		System.out.println(sides.left.length);
 		double[] times = new double[sides.left.length];
 		double[] leftPos = new double[sides.left.length];
 		double[] rightPos = new double[sides.right.length];
@@ -21,30 +21,34 @@ public class Graphing {
 		double[] x = new double[sides.right.length];
 		double[] y = new double[sides.right.length];
 		int currentSegment = 0;
+		double segmentLengthSum = 0;
 		for (int i = 0; i < times.length; i++) {
 			times[i] = i * dt;
 			double pos = center.getProfile().stateByTimeClamped(i * dt).pos();
-			if (pos > center.getSegments()[currentSegment].curve.getTotalArcLength()) {
+			double currentLength = center.getSegments()[currentSegment].curve.getTotalArcLength();
+			if (pos > currentLength + segmentLengthSum) {
 				if (currentSegment + 1 >= center.getSegments().length)
 					break;
 				currentSegment++;
+				segmentLengthSum += currentLength;
 			}
+			TrajectoryPoint test = sides.left[i];
+			double t = test.position;
 			leftPos[i] = sides.left[i].position;
 			rightPos[i] = sides.right[i].position;
 			leftVel[i] = sides.left[i].velocity;
 			rightVel[i] = sides.right[i].velocity;
 			leftAcc[i] = sides.left[i].acceleration;
 			rightAcc[i] = sides.right[i].acceleration;
-			Vector v = center.getSegments()[currentSegment].curve.getPointAtArcLength(pos);
-			x[i] = v.x;
-			y[i] = v.y;
-			// System.out.println(v.x + ", " + v.y);
+			x[i] = sides.left[i].x;
+			y[i] = sides.left[i].y;
+			// System.out.println(x[i] + ", " + y[i]);
 			// Vector v2 = curve.getPointAtArcLength(pos);
 			// System.out.println(v2.x + ", " + v2.y);
 			curvatures[i] = center.getSegments()[currentSegment].curve
 					.getCurvatureAtArcLength(center.getProfile().stateByTime(i * dt).get().pos()) * -200;
 		}
-		// plot1(x, y, "My X vs Y");
+		plot1(x, y, "My X vs Y");
 		plot2(times, leftPos, rightPos, "My Pos vs Time, L=B,R=R");
 		plot3(times, leftVel, rightVel, curvatures, "My Vel vs Time, L=B,R=R");
 		plot2(times, leftAcc, rightAcc, "My Acc vs Time, L=B,R=R");

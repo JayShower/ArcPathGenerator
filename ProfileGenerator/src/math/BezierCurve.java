@@ -17,10 +17,6 @@ public final class BezierCurve implements Curve {
 	 *            the control points to use. must be at least 2, and no more than 7.
 	 */
 	public BezierCurve(Vector... controlPoints) {
-		this(controlPoints, true);
-	}
-
-	private BezierCurve(Vector[] controlPoints, boolean isTop) {
 		this.controlPoints = controlPoints;
 		// this.n = controlPoints.length - 1;
 		// Timer t = new Timer();
@@ -40,7 +36,7 @@ public final class BezierCurve implements Curve {
 		for (int i = 0; i < newPoints.length; i++) {
 			newPoints[i] = controlPoints[i + 1].subtract(controlPoints[i]).scale(newPoints.length);
 		}
-		return new BezierCurve(newPoints, false); // warning, recursive
+		return new BezierCurve(newPoints);
 	}
 
 	public Vector deCasteljau(double t) {
@@ -74,20 +70,24 @@ public final class BezierCurve implements Curve {
 		return Util.gaussQuadIntegrate(this::arcLengthDerivative, lower, upper);
 	}
 
-	public LookupTable tToArcLengthTable() {
+	public void startMakingTable() {
 		if (tToArcLengthTable == null) {
 			tToArcLengthTable = new LookupTable(this::arcLengthIntegral, 0, 1);
 		}
+	}
+
+	public LookupTable getTable() {
+		startMakingTable();
 		tToArcLengthTable.waitToBeDone();
 		return tToArcLengthTable;
 	}
 
 	public double getArcLength(double t) {
-		return tToArcLengthTable().getOutput(t);
+		return getTable().getOutput(t);
 	}
 
 	public double tFromArcLength(double arcLength) {
-		return tToArcLengthTable().getInput(arcLength);
+		return getTable().getInput(arcLength);
 	}
 
 	public double curvature(double t) {
@@ -98,7 +98,7 @@ public final class BezierCurve implements Curve {
 
 	@Override
 	public double getTotalArcLength() {
-		return arcLengthIntegral(0, 1);
+		return tToArcLengthTable.getOutput(1);
 	}
 
 	@Override

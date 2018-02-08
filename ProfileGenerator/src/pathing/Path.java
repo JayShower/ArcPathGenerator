@@ -1,23 +1,25 @@
 package pathing;
 
 import java.util.ArrayList;
-import java.util.Optional;
 
 import math.BezierCurve;
 import math.Line;
+import math.Util;
 import math.Vector;
 import motion.GenerateMotionProfile;
 import motion.MotionProfile;
 import motion.MotionProfileConstraints;
 import motion.MotionProfileGoal;
 import motion.MotionProfileGoal.CompletionBehavior;
+import motion.MotionSegment;
 import motion.MotionState;
 
 /**
  * Class for making continuous-curvature paths.
  * 
  * Most basic shape combinations are continuous-curvature, I haven't tested it
- * all
+ * all. There are some waypoint combinations where the paths that get made would
+ * be very weird, so check all paths by graphing them
  * 
  * @author Jay
  *
@@ -29,14 +31,6 @@ public final class Path {
 	private Waypoint prev;
 	private MotionProfile profile;
 
-	public Path(boolean driveForwards) {
-		this(new Waypoint(Vector.ZERO, Waypoint.STRAIGHT, 0), driveForwards);
-	}
-
-	// you might want to use this constructor if your robot starts at an angle to
-	// the DriverStation wall. (E.g., In 2017, we sometimes started our robot
-	// pointed towards the hoppers).
-	// If you don't use this, your path will be relative to robot starting state.
 	/**
 	 * 
 	 * @param first
@@ -54,20 +48,37 @@ public final class Path {
 	}
 
 	public void addWaypoint(Waypoint w, double midControlPercent) {
-		if (Waypoint.areCollinear(w, prev)) {
-
-		} else if (Waypoint.doIntersect(w, prev)) {
-
-		} else if (Waypoint.areParallel(w, prev)) {
-
-		} else if (Waypoint.areAntiparallel(w, prev)) {
-
+		double theta1 = prev.heading.getAbsoluteAngle();
+		double theta2 = w.heading.getAbsoluteAngle();
+		System.out.println("T1 " + theta1);
+		System.out.println("T2 " + theta2);
+		Vector direction = w.position.subtract(prev.position);
+		double alpha = direction.getAbsoluteAngle() - theta1;
+		System.out.println("A " + alpha + ", " + Math.PI / 4);
+		double beta = theta2 - theta1;
+		System.out.println("B " + beta);
+		if (Util.epsilonEquals(alpha, 0) && Util.epsilonEquals(beta, 0)) {
+			// waypoints are colinear
+			System.out.println("Running thing 0");
+			Line curve = new Line(prev.position, w.position);
+			segments.add(new PathSegment(prev, w, curve));
+			prev = w;
+		} else if ((alpha >= 0 && beta < alpha) || (alpha <= 0 && beta > alpha)) {
+			// not the same as checking if abs(beta) < abs(alpha)
+			System.out.println("Running thing 1");
+			addCase1(w, midControlPercent);
+		} else if (Math.abs(beta) > Math.abs(alpha) && Math.abs(beta) <= Math.PI / 2.0) {
+			System.out.println("Running thing 2");
+			addCase2(w, midControlPercent);
+		} else if (Math.abs(beta) > Math.abs(alpha) && Math.abs(beta) > Math.PI / 2.0) {
+			System.out.println("Running thing 3");
+			addCase3(w, midControlPercent);
 		} else {
-			System.err.println("SHOULD NOT BE HERE IN ADD WAYPOINT METHOD");
+			System.err.println("INVALID WAYPOINT");
 		}
 	}
 
-	private void addIntersectingBelow(Waypoint w, double n) {
+	private void addCase2(Waypoint w, double n) {
 		Line lineA = new Line(prev);
 		Line lineB = new Line(w);
 		Vector intersection = lineA.getIntersection(lineB);
@@ -83,7 +94,7 @@ public final class Path {
 		prev = w;
 	}
 
-	private void addIntersectingAboveOrParallel(Waypoint w, double n) {
+	private void addCase1(Waypoint w, double n) {
 		// could have middle point be along direction at n, or be parallel at n
 		// right now doing middle point along direction at n
 		Vector v1 = prev.position;
@@ -101,7 +112,7 @@ public final class Path {
 		prev = w;
 	}
 
-	private void addIntersectingBehindOrAntiparallel(Waypoint w, double n) {
+	private void addCase3(Waypoint w, double n) {
 		Vector v1 = prev.position;
 		Vector v7 = w.position;
 		Line l17 = new Line(v1, v7);
@@ -118,19 +129,27 @@ public final class Path {
 		prev = w;
 	}
 
-	/*
-	 * Less likely to be continuous curvature if you use this
-	 */
 	public void addPathSegment(PathSegment seg) {
 		segments.add(seg);
 	}
 
 	public void generateProfile(double maxAcceleration, double maxVelocity) {
+		for (PathSegment seg : segments) {
+			if (seg.curve instanceof BezierCurve) {
+				((BezierCurve) seg.curve).startMakingTable();
+			}
+		}
 		MotionProfileConstraints constraints = new MotionProfileConstraints(maxVelocity, maxAcceleration);
 
 		MotionState previousState = new MotionState(0, 0, 0, maxAcceleration);
-		double goalPos = driveForwards ? segments.get(0).curve.getTotalArcLength()
-				: -segments.get(0).curve.getTotalArcLength() + previousState.pos();
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println("Total length: " + segments.get(0).curve.getTotalArcLength());
+		double goalPos = segments.get(0).curve.getTotalArcLength() + previousState.pos();
 
 		MotionProfileGoal goalState = new MotionProfileGoal(goalPos, Math.abs(segments.get(0).end.vel),
 				CompletionBehavior.OVERSHOOT);
@@ -139,14 +158,19 @@ public final class Path {
 		previousState = currentProfile.endState();
 
 		for (int i = 1; i < segments.size(); i++) {
-			goalPos = driveForwards ? segments.get(i).curve.getTotalArcLength()
-					: -segments.get(i).curve.getTotalArcLength();
+			goalPos = segments.get(i).curve.getTotalArcLength() + previousState.pos();
 			goalState = new MotionProfileGoal(goalPos, segments.get(i).end.vel, CompletionBehavior.OVERSHOOT);
 			currentProfile.appendProfile(
 					GenerateMotionProfile.generateStraightMotionProfile(constraints, goalState, previousState));
 			previousState = currentProfile.endState();
 		}
-		this.profile = currentProfile;
+		profile = currentProfile;
+		if (!driveForwards) {
+			for (MotionSegment s : profile.segments()) {
+				s.setStart(s.start().flipped());
+				s.setEnd(s.end().flipped());
+			}
+		}
 	}
 
 	public PathSegment[] getSegments() {
@@ -158,9 +182,6 @@ public final class Path {
 	}
 
 	public TrajectoryHolder getTrajectoryPoints(double robotWidth, double pointDurationSec) {
-		int cs = 0;
-		PathSegment currentSegment = segments.get(0);
-
 		double duration = profile.duration();
 		int pointCount = (int) (duration / pointDurationSec);
 		double increment = duration / (pointCount - 1);
@@ -173,17 +194,20 @@ public final class Path {
 		left[0] = new TrajectoryPoint(previousState.pos(), previousState.vel(), previousState.acc(), pointDurationSec);
 		right[0] = new TrajectoryPoint(previousState.pos(), previousState.vel(), previousState.acc(), pointDurationSec);
 
+		int cs = 0;
+		PathSegment currentSegment = segments.get(0);
+		double segmentLengthSum = 0;
 		for (int i = 1; i < pointCount; i++) {
-			Optional<MotionState> om = profile.stateByTime(i * increment);
-			if (!om.isPresent()) {
-				break; // done reading profile
-			}
-			MotionState state = om.get();
-			if (state.pos() > currentSegment.curve.getTotalArcLength()) {
-				if (cs + 1 >= segments.size())
-					break;
-				cs++;
-				currentSegment = segments.get(cs);
+			MotionState state = profile.stateByTimeClamped(i * increment);
+			double currentLength = currentSegment.curve.getTotalArcLength();
+			if (state.pos() > currentLength + segmentLengthSum) {
+				if (cs + 1 >= segments.size()) {
+
+				} else {
+					cs++;
+					segmentLengthSum += currentLength;
+					currentSegment = segments.get(cs);
+				}
 			}
 			/*
 			 * Because K positive is curving to the left, and K negative is to the right,
@@ -198,12 +222,13 @@ public final class Path {
 			 * for right side
 			 */
 
-			double curvature = currentSegment.curve.getCurvatureAtArcLength(state.pos());
+			double curvature = currentSegment.curve.getCurvatureAtArcLength(state.pos() - segmentLengthSum);
 			double dArc = state.pos() - previousState.pos();
-
+			Vector coord = currentSegment.curve.getPointAtArcLength(state.pos() - segmentLengthSum);
 			if (Math.abs(curvature) < 1.0E-20) {
-				left[i] = new TrajectoryPoint(left[i - 1].position + dArc, state.vel(), state.acc(), pointDurationSec);
-				right[i] = new TrajectoryPoint(right[i - 1].position + dArc, state.vel(), state.acc(),
+				left[i] = new TrajectoryPoint(coord.x, coord.y, left[i - 1].position + dArc, state.vel(), state.acc(),
+						pointDurationSec);
+				right[i] = new TrajectoryPoint(coord.x, coord.y, right[i - 1].position + dArc, state.vel(), state.acc(),
 						pointDurationSec);
 			} else {
 				double r = 1 / curvature;
@@ -216,8 +241,10 @@ public final class Path {
 				double rightV = state.vel() * rK;
 				double leftA = (leftV - left[i - 1].velocity) / pointDurationSec;
 				double rightA = (rightV - right[i - 1].velocity) / pointDurationSec;
-				left[i] = new TrajectoryPoint(left[i - 1].position + dArc * lK, leftV, leftA, pointDurationSec);
-				right[i] = new TrajectoryPoint(right[i - 1].position + dArc * rK, rightV, rightA, pointDurationSec);
+				left[i] = new TrajectoryPoint(coord.x, coord.y, left[i - 1].position + dArc * lK, leftV, leftA,
+						pointDurationSec);
+				right[i] = new TrajectoryPoint(coord.x, coord.y, right[i - 1].position + dArc * rK, rightV, rightA,
+						pointDurationSec);
 			}
 			previousState = state;
 		}
