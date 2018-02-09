@@ -98,7 +98,7 @@ public final class BezierCurve implements Curve {
 
 	@Override
 	public double getTotalArcLength() {
-		return tToArcLengthTable.getOutput(1);
+		return getTable().getOutput(1);
 	}
 
 	@Override

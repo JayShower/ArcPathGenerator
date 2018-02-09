@@ -40,7 +40,7 @@ public class Test {
 		// Vector e = new Vector(100, 200);
 		// curve = new BezierCurve(a, a1, b, c, d, e1, e);
 
-		timer.printElapsed("Time to make bezier: ");
+		// timer.printElapsed("Time to make bezier: ");
 
 		// System.out.println(curve);
 		// System.out.println(curve.derivative());
@@ -55,6 +55,7 @@ public class Test {
 		// graphCurvature(curve);
 		// testLUTinvertibility(curve);
 		testPathCreation();
+		LookupTable.closeThreadPools();
 	}
 
 	public static void graphControlPoints(BezierCurve curve) {
@@ -218,17 +219,27 @@ public class Test {
 	}
 
 	public static void testPathCreation() {
+		// System.out.println("CHECK: ");
+		// System.out.println(-Math.PI / 3);
+		// System.out.println(Math.atan2(Math.sin(-Math.PI / 3), Math.cos(-Math.PI /
+		// 3)));
+		Timer t = new Timer();
+		t.reset();
+		double maxV = 25;
+		double maxA = 5;
 		Waypoint a = new Waypoint(5, 5, Math.PI / 2, 0);
-		Waypoint b = new Waypoint(155, 155, 0, 0);
+		Waypoint c = new Waypoint(50, 50, 0, maxV);
+		Waypoint d = new Waypoint(100, 50, 0, maxV);
+		Waypoint b = new Waypoint(150, 5, -Math.PI / 2, 0);
 		Path p = new Path(a, true);
-		p.addWaypoint(b);
+		p.addWaypoints(c, d, b);
 		double dt = 0.01;
-		p.generateProfile(50, 25);
-		TrajectoryHolder sides = p.getTrajectoryPoints(15, dt);
-		System.out.println(p.getSegments().length);
-		System.out.println(p.getProfile().endPos());
-		// Test.graphDeCasteljau((BezierCurve) p.getSegments()[0].curve);
-		Graphing.graphMyPath(p, p.getTrajectoryPoints(15, dt), dt);
+		p.generateProfile(maxV, maxA);
+		TrajectoryHolder sides = p.getTrajectoryPoints(25, dt);
+		t.printElapsed("Time to make: ");
+		System.out.println("TIME: " + p.getProfile().duration());
+		System.out.println("LENGTH: " + p.getProfile().endPos());
+		Graphing.graphMyPath(p, sides, dt);
 	}
 
 	public static void main(String[] args) {

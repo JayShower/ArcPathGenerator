@@ -1,6 +1,5 @@
 package pathing;
 
-import math.Util;
 import math.Vector;
 
 public final class Waypoint {
@@ -23,7 +22,7 @@ public final class Waypoint {
 	 *            positive x is towards right of robot, positive y is forwards <br>
 	 * @param heading
 	 *            way front of robot is facing, in radians. Positve angle is upwards
-	 *            from x axis. Must be between 0 and 2pi
+	 *            from x axis. Must be between -pi and pi
 	 * @param vel
 	 *            absolute velocity of the robot as it passes through this waypoint.
 	 */
@@ -38,7 +37,7 @@ public final class Waypoint {
 	 *            is forwards <br>
 	 * @param heading
 	 *            way front of robot is facing, in radians. Positve angle is upwards
-	 *            from x axis. Must be between 0 and 2pi
+	 *            from x axis. Must be between -pi and pi
 	 * @param vel
 	 *            absolute velocity of the robot as it passes through this waypoint.
 	 */
@@ -70,29 +69,9 @@ public final class Waypoint {
 		return new Waypoint(pos, head, vel);
 	}
 
-	public static boolean areCollinear(Waypoint a, Waypoint b) {
-		if (a.heading.equals(b.heading)) {
-			double dx = b.position.x - a.position.x;
-			double dy = b.position.y - a.position.y;
-			Vector direction = new Vector(dx, dy);
-			return a.heading.equals(direction.normalized());
-		} else {
-			return false;
-		}
-	}
-
-	public static boolean doIntersect(Waypoint a, Waypoint b) {
-		return !Util.epsilonEquals(a.heading.slope(), b.heading.slope());
-	}
-
-	public static boolean areParallel(Waypoint a, Waypoint b) {
-		return a.heading.equals(b.heading);
-	}
-
-	public static boolean areAntiparallel(Waypoint a, Waypoint b) {
-		boolean cosine = Util.epsilonEquals(a.heading.cosine(), -b.heading.cosine());
-		boolean sine = Util.epsilonEquals(a.heading.sine(), -b.heading.sine());
-		return cosine && sine;
+	@Override
+	public String toString() {
+		return String.format("(%s), (%s)", position.toString(), heading.toString());
 	}
 
 }

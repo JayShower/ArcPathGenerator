@@ -87,4 +87,22 @@ public class Util {
 		return (x1 * y2 - y1 * x2) / Math.pow(x1 * x1 + y1 * y1, 1.5);
 	}
 
+	public static boolean isIncreasing(double[] array) {
+		double start = array[0];
+		for (int i = 1; i < array.length; i++) {
+			if (array[i] < start)
+				return false;
+		}
+		return true;
+	}
+
+	public static boolean isDecreasing(double[] array) {
+		double start = array[0];
+		for (int i = 1; i < array.length; i++) {
+			if (array[i] > start)
+				return false;
+		}
+		return true;
+	}
+
 }

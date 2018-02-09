@@ -157,4 +157,9 @@ public class LookupTable {
 		return outIn.computeIfAbsent(output, f);
 	}
 
+	public static void closeThreadPools() {
+		threadPool.shutdown();
+		singleThread.shutdown();
+	}
+
 }

@@ -26,6 +26,10 @@ public final class Vector {
 		return x * other.x + y * other.y;
 	}
 
+	public double crossProduct(Vector other) {
+		return x * other.y - y * other.x;
+	}
+
 	public double magnitudeSquared() {
 		return dotProduct(this);
 	}
@@ -116,7 +120,7 @@ public final class Vector {
 
 	@Override
 	public String toString() {
-		return String.format("%.2f, %.2f", x, y);
+		return String.format("%f, %f", x, y);
 	}
 
 	public static final double headingE = 1.0e-12;

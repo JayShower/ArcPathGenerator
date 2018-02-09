@@ -2,6 +2,7 @@ package plot;
 
 import java.awt.Color;
 
+import math.Util;
 import pathing.Path;
 import pathing.Path.TrajectoryHolder;
 import pathing.TrajectoryPoint;
@@ -9,7 +10,7 @@ import pathing.TrajectoryPoint;
 public class Graphing {
 
 	public static void graphMyPath(Path center, TrajectoryHolder sides, double dt) {
-		System.out.println(sides.left.length);
+		// System.out.println(sides.left.length);
 		double[] times = new double[sides.left.length];
 		double[] leftPos = new double[sides.left.length];
 		double[] rightPos = new double[sides.right.length];
@@ -45,9 +46,11 @@ public class Graphing {
 			// System.out.println(x[i] + ", " + y[i]);
 			// Vector v2 = curve.getPointAtArcLength(pos);
 			// System.out.println(v2.x + ", " + v2.y);
-			curvatures[i] = center.getSegments()[currentSegment].curve
-					.getCurvatureAtArcLength(center.getProfile().stateByTime(i * dt).get().pos()) * -200;
+			curvatures[i] = center.getSegments()[currentSegment].curve.getCurvatureAtArcLength(
+					center.getProfile().stateByTime(i * dt).get().pos() - segmentLengthSum) * -200;
 		}
+		System.out.println("X is increasing: " + Util.isIncreasing(x));
+		System.out.println("Y is increasing: " + Util.isIncreasing(y));
 		plot1(x, y, "My X vs Y");
 		plot2(times, leftPos, rightPos, "My Pos vs Time, L=B,R=R");
 		plot3(times, leftVel, rightVel, curvatures, "My Vel vs Time, L=B,R=R");

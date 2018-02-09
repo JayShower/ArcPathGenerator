@@ -1,9 +1,11 @@
 package pathing;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import math.BezierCurve;
-import math.Line;
+import math.Curve;
+import math.LineSegment;
 import math.Util;
 import math.Vector;
 import motion.GenerateMotionProfile;
@@ -43,97 +45,112 @@ public final class Path {
 		this.prev = first;
 	}
 
+	public void addWaypoints(Waypoint... waypoints) {
+		for (Waypoint w : waypoints) {
+			addWaypoint(w);
+		}
+	}
+
 	public void addWaypoint(Waypoint w) {
 		addWaypoint(w, 0.5);
 	}
 
 	public void addWaypoint(Waypoint w, double midControlPercent) {
+		// System.out.println("ADDING WAYPOINT: " + w.toString());
 		double theta1 = prev.heading.getAbsoluteAngle();
 		double theta2 = w.heading.getAbsoluteAngle();
-		System.out.println("T1 " + theta1);
-		System.out.println("T2 " + theta2);
+
 		Vector direction = w.position.subtract(prev.position);
 		double alpha = direction.getAbsoluteAngle() - theta1;
-		System.out.println("A " + alpha + ", " + Math.PI / 4);
 		double beta = theta2 - theta1;
-		System.out.println("B " + beta);
+
+		// System.out.println("T1 " + theta1);
+		// System.out.println("T2 " + theta2);
+		// System.out.println("A " + alpha + ", " + Math.PI / 4);
+		// System.out.println("B " + beta);
+		Curve curve = null;
 		if (Util.epsilonEquals(alpha, 0) && Util.epsilonEquals(beta, 0)) {
 			// waypoints are colinear
-			System.out.println("Running thing 0");
-			Line curve = new Line(prev.position, w.position);
-			segments.add(new PathSegment(prev, w, curve));
-			prev = w;
+			// System.out.println("Running thing 0");
+			curve = new LineSegment(prev.position, w.position);
 		} else if ((alpha >= 0 && beta < alpha) || (alpha <= 0 && beta > alpha)) {
 			// not the same as checking if abs(beta) < abs(alpha)
-			System.out.println("Running thing 1");
-			addCase1(w, midControlPercent);
-		} else if (Math.abs(beta) > Math.abs(alpha) && Math.abs(beta) <= Math.PI / 2.0) {
-			System.out.println("Running thing 2");
-			addCase2(w, midControlPercent);
-		} else if (Math.abs(beta) > Math.abs(alpha) && Math.abs(beta) > Math.PI / 2.0) {
-			System.out.println("Running thing 3");
-			addCase3(w, midControlPercent);
+			// System.out.println("Running thing 1");
+			curve = addCase1(w, midControlPercent);
+		} else if (Math.abs(beta) > Math.abs(alpha) && Math.abs(beta) <= 2 * Math.PI / 3) {
+			// System.out.println("Running thing 2");
+			curve = addCase2(w, midControlPercent);
+		} else if (Math.abs(beta) > Math.abs(alpha) && Math.abs(beta) > 2 * Math.PI / 3) {
+			// System.out.println("Running thing 3");
+			curve = addCase3(w, midControlPercent);
 		} else {
-			System.err.println("INVALID WAYPOINT");
+			System.err.println("INVALID WAYPOINT/BAD PATH");
+		}
+		if (curve != null) {
+			segments.add(new PathSegment(prev, w, curve));
+			prev = w;
 		}
 	}
 
-	private void addCase2(Waypoint w, double n) {
-		Line lineA = new Line(prev);
-		Line lineB = new Line(w);
-		Vector intersection = lineA.getIntersection(lineB);
-		Vector v1 = prev.position;
-		Vector v5 = w.position;
-		Vector v3 = intersection;
-		Line ac = new Line(v1, v3);
-		Line ce = new Line(v3, v5);
-		Vector v2 = ac.getPointAtPercent(n);
-		Vector v4 = ce.getPointAtPercent(n);
-		BezierCurve curve = new BezierCurve(v1, v2, v3, v4, v5);
-		segments.add(new PathSegment(prev, w, curve));
-		prev = w;
-	}
-
-	private void addCase1(Waypoint w, double n) {
+	private BezierCurve addCase1(Waypoint w, double n) {
 		// could have middle point be along direction at n, or be parallel at n
 		// right now doing middle point along direction at n
 		Vector v1 = prev.position;
 		Vector v7 = w.position;
-		Line l17 = new Line(v1, v7);
+		LineSegment l17 = new LineSegment(v1, v7);
 		Vector v4 = l17.getPointAtPercent(n);
 		Vector h3 = prev.heading.rotate(-Math.PI / 2);
-		Vector v3 = new Line(v4, v4.add(h3)).getIntersection(new Line(prev));
+		Vector v3 = new LineSegment(v4, v4.add(h3)).getIntersection(new LineSegment(prev));
 		Vector h5 = w.heading.rotate(Math.PI / 2);
-		Vector v5 = new Line(v4, v4.add(h5)).getIntersection(new Line(w));
-		Vector v2 = new Line(v1, v3).getPointAtPercent(n);
-		Vector v6 = new Line(v5, v7).getPointAtPercent(n);
-		BezierCurve curve = new BezierCurve(v1, v2, v3, v4, v5, v6, v7);
-		segments.add(new PathSegment(prev, w, curve));
-		prev = w;
+		Vector v5 = new LineSegment(v4, v4.add(h5)).getIntersection(new LineSegment(w));
+		Vector v2 = new LineSegment(v1, v3).getPointAtPercent(n);
+		Vector v6 = new LineSegment(v5, v7).getPointAtPercent(n);
+		return new BezierCurve(v1, v2, v3, v4, v5, v6, v7);
 	}
 
-	private void addCase3(Waypoint w, double n) {
+	private BezierCurve addCase2(Waypoint w, double n) {
+		LineSegment lineA = new LineSegment(prev);
+		LineSegment lineB = new LineSegment(w);
+		// System.out.println("Line A: " + lineA.toString());
+		// System.out.println("Line B: " + lineB.toString());
+		Vector intersection = lineA.getIntersection(lineB);
+		// System.out.println(intersection);
+		Vector v1 = prev.position;
+		Vector v5 = w.position;
+		Vector v3 = intersection;
+		LineSegment ac = new LineSegment(v1, v3);
+		LineSegment ce = new LineSegment(v3, v5);
+		Vector v2 = ac.getPointAtPercent(n);
+		Vector v4 = ce.getPointAtPercent(n);
+		return new BezierCurve(v1, v2, v3, v4, v5);
+	}
+
+	private BezierCurve addCase3(Waypoint w, double n) {
 		Vector v1 = prev.position;
 		Vector v7 = w.position;
-		Line l17 = new Line(v1, v7);
+		LineSegment l17 = new LineSegment(v1, v7);
 		Vector m4 = l17.getPointAtPercent(n);
 		Vector a4 = l17.getDirection().rotate(Math.PI / 2);
-		Vector v4 = m4.add(a4);
-		Line l4 = new Line(v4, v4.add(l17.getDirection()));
-		Vector v3 = l4.getIntersection(new Line(prev));
-		Vector v5 = l4.getIntersection(new Line(w));
-		Vector v2 = new Line(v1, v3).getPointAtPercent(n);
-		Vector v6 = new Line(v5, v7).getPointAtPercent(n);
-		BezierCurve curve = new BezierCurve(v1, v2, v3, v4, v5, v6, v7);
-		segments.add(new PathSegment(prev, w, curve));
-		prev = w;
+		Vector v4 = m4.add(a4.scale(0.5));
+		LineSegment l4 = new LineSegment(v4, v4.add(l17.getDirection()));
+		Vector v3 = l4.getIntersection(new LineSegment(prev));
+		Vector v5 = l4.getIntersection(new LineSegment(w));
+		Vector v2 = new LineSegment(v1, v3).getPointAtPercent(n);
+		Vector v6 = new LineSegment(v5, v7).getPointAtPercent(n);
+		return new BezierCurve(v1, v2, v3, v4, v5, v6, v7);
 	}
 
 	public void addPathSegment(PathSegment seg) {
 		segments.add(seg);
+		prev = seg.end;
 	}
 
-	public void generateProfile(double maxAcceleration, double maxVelocity) {
+	public void addPathSegments(PathSegment... seg) {
+		segments.addAll(Arrays.asList(seg));
+		prev = seg[seg.length - 1].end;
+	}
+
+	public void generateProfile(double maxVelocity, double maxAcceleration) {
 		for (PathSegment seg : segments) {
 			if (seg.curve instanceof BezierCurve) {
 				((BezierCurve) seg.curve).startMakingTable();
@@ -142,13 +159,9 @@ public final class Path {
 		MotionProfileConstraints constraints = new MotionProfileConstraints(maxVelocity, maxAcceleration);
 
 		MotionState previousState = new MotionState(0, 0, 0, maxAcceleration);
-		try {
-			Thread.sleep(100);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		System.out.println("Total length: " + segments.get(0).curve.getTotalArcLength());
+
+		// System.out.println("Total length: " +
+		// segments.get(0).curve.getTotalArcLength());
 		double goalPos = segments.get(0).curve.getTotalArcLength() + previousState.pos();
 
 		MotionProfileGoal goalState = new MotionProfileGoal(goalPos, Math.abs(segments.get(0).end.vel),
@@ -182,6 +195,10 @@ public final class Path {
 	}
 
 	public TrajectoryHolder getTrajectoryPoints(double robotWidth, double pointDurationSec) {
+		int cs = 0;
+		PathSegment currentSegment = segments.get(0);
+		double segmentLengthSum = 0;
+
 		double duration = profile.duration();
 		int pointCount = (int) (duration / pointDurationSec);
 		double increment = duration / (pointCount - 1);
@@ -190,13 +207,13 @@ public final class Path {
 		TrajectoryPoint[] right = new TrajectoryPoint[pointCount];
 
 		MotionState previousState = profile.stateByTime(0).get();
+		Vector coord = currentSegment.curve.getPointAtArcLength(0);
 
-		left[0] = new TrajectoryPoint(previousState.pos(), previousState.vel(), previousState.acc(), pointDurationSec);
-		right[0] = new TrajectoryPoint(previousState.pos(), previousState.vel(), previousState.acc(), pointDurationSec);
+		left[0] = new TrajectoryPoint(coord.x, coord.y, previousState.pos(), previousState.vel(), previousState.acc(),
+				pointDurationSec);
+		right[0] = new TrajectoryPoint(coord.x, coord.y, previousState.pos(), previousState.vel(), previousState.acc(),
+				pointDurationSec);
 
-		int cs = 0;
-		PathSegment currentSegment = segments.get(0);
-		double segmentLengthSum = 0;
 		for (int i = 1; i < pointCount; i++) {
 			MotionState state = profile.stateByTimeClamped(i * increment);
 			double currentLength = currentSegment.curve.getTotalArcLength();
@@ -224,7 +241,8 @@ public final class Path {
 
 			double curvature = currentSegment.curve.getCurvatureAtArcLength(state.pos() - segmentLengthSum);
 			double dArc = state.pos() - previousState.pos();
-			Vector coord = currentSegment.curve.getPointAtArcLength(state.pos() - segmentLengthSum);
+			coord = currentSegment.curve.getPointAtArcLength(state.pos() - segmentLengthSum);
+			// System.out.println(coord);
 			if (Math.abs(curvature) < 1.0E-20) {
 				left[i] = new TrajectoryPoint(coord.x, coord.y, left[i - 1].position + dArc, state.vel(), state.acc(),
 						pointDurationSec);
@@ -234,7 +252,7 @@ public final class Path {
 				double r = 1 / curvature;
 				double lR = Math.abs(r - robotWidth / 2);
 				double rR = Math.abs(r + robotWidth / 2);
-				r = Math.abs(r);
+				r = Math.max(lR, rR);
 				double lK = lR / r;
 				double rK = rR / r;
 				double leftV = state.vel() * lK;
@@ -249,6 +267,19 @@ public final class Path {
 			previousState = state;
 		}
 		return new TrajectoryHolder(left, right);
+	}
+
+	public static boolean isPossible(TrajectoryHolder points, double lKv, double lKa, double lKs, double rKv,
+			double rKa, double rKs) {
+		double leftMaxVolt = 0;
+		double rightMaxVolt = 0;
+		for (int i = 0; i < points.left.length; i++) {
+			leftMaxVolt = Math.max(leftMaxVolt,
+					Math.abs(points.left[i].velocity * lKv + points.left[i].acceleration * lKa + lKs));
+			rightMaxVolt = Math.max(rightMaxVolt,
+					Math.abs(points.right[i].velocity * rKv + points.right[i].acceleration * rKa + rKs));
+		}
+		return leftMaxVolt <= 12 && rightMaxVolt <= 12;
 	}
 
 	public static class TrajectoryHolder {
