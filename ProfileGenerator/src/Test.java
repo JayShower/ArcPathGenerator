@@ -11,7 +11,6 @@ import pathing.Path;
 import pathing.Path.TrajectoryHolder;
 import pathing.Waypoint;
 import plot.FalconLinePlot;
-import plot.Graphing;
 
 public class Test {
 
@@ -234,18 +233,9 @@ public class Test {
 		double startingX = Field.Switch.BOUNDARY.getX() - robotWidth / 2.0 - 5;
 		double startingY = robotLength / 2.0;
 		path = new Path(new Waypoint(startingX, startingY, Math.PI / 2, 0), true);
-
-		double middle1X = Field.Scale.PLATFORM.getX();
-		double middle1Y = Field.Scale.PLATFORM.getY() - robotWidth / 2.0;
-		path.addWaypoint(new Waypoint(middle1X, middle1Y, 0, maxVelocity));
-
-		double middle2X = Field.Scale.PLATFORM.getMaxX();
-		double middle2Y = middle1Y;
-		path.addWaypoint(new Waypoint(middle2X, middle2Y, 0, maxVelocity));
-
-		double endingX = Field.Scale.RIGHT_PLATE.getMaxX() - robotWidth / 2.0;
-		double endingY = Field.Scale.RIGHT_PLATE.getY() - robotLength / 2.0;
-		path.addWaypoint(new Waypoint(endingX, endingY, Math.PI / 2, 0), 0.1);
+		double endingX = Field.Scale.LEFT_PLATE.getCenterX() - robotWidth / 2.0;
+		double endingY = Field.Scale.LEFT_PLATE.getY() - robotLength / 2.0;
+		path.addWaypoint(new Waypoint(endingX + 5, endingY + 5, 3 * Math.PI / 7, 0));
 
 		// path = new Path(new Waypoint(0, 0, Math.PI / 2, 0), true);
 		// path.addWaypoint(new Waypoint(100, 0, -Math.PI / 2, 0));

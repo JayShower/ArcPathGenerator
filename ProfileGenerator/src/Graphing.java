@@ -1,12 +1,13 @@
-package plot;
 
 import java.awt.Color;
+import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
 
 import math.Util;
 import pathing.Path;
 import pathing.Path.TrajectoryHolder;
 import pathing.TrajectoryPoint;
+import plot.FalconLinePlot;
 
 public class Graphing {
 
@@ -44,7 +45,7 @@ public class Graphing {
 			rightAcc[i] = sides.right[i].acceleration;
 			x[i] = sides.left[i].x;
 			y[i] = sides.left[i].y;
-			System.out.println(x[i] + ", " + y[i]);
+			// System.out.println(x[i] + ", " + y[i]);
 			// Vector v2 = curve.getPointAtArcLength(pos);
 			// System.out.println(v2.x + ", " + v2.y);
 			curvatures[i] = center.getSegments()[currentSegment].curve.getCurvatureAtArcLength(
@@ -67,6 +68,53 @@ public class Graphing {
 		double max = Math.max(maxX, maxY);
 		fig2.setMaxMin(0, max, 0, max);
 		fig2.setTitle(title);
+		addRectangle(fig2, Field.Scale.LEFT_NULL_ZONE, Color.BLACK);
+		addRectangle(fig2, Field.Scale.RIGHT_NULL_ZONE, Color.BLACK);
+		addRectangle(fig2, Field.Scale.LEFT_PLATE, Color.BLUE);
+		addRectangle(fig2, Field.Scale.RIGHT_PLATE, Color.BLUE);
+		addRectangle(fig2, Field.Scale.PLATFORM, Color.RED);
+		addRectangle(fig2, Field.Switch.BOUNDARY, Color.GREEN);
+		addRectangle(fig2, Field.Zones.EXCHANGE_ZONE, Color.ORANGE);
+		addRectangle(fig2, Field.Zones.POWER_CUBE_ZONE, Color.PINK);
+		for (int i = 0; i < Field.Switch.CUBES.length; i++) {
+			addRectangle(fig2, Field.Switch.CUBES[i], Color.YELLOW);
+		}
+	}
+
+	private static void addRectangle(FalconLinePlot fig, Rectangle2D r, Color lineColor) {
+		fig.addData(getLeft(r), lineColor);
+		fig.addData(getRight(r), lineColor);
+		fig.addData(getTop(r), lineColor);
+		fig.addData(getBottom(r), lineColor);
+	}
+
+	private static double[][] getLeft(Rectangle2D r) {
+		return get(r.getX(), r.getY(), r.getX(), r.getMaxY());
+	}
+
+	private static double[][] getRight(Rectangle2D r) {
+		return get(r.getMaxX(), r.getY(), r.getMaxX(), r.getMaxY());
+	}
+
+	private static double[][] getTop(Rectangle2D r) {
+		return get(r.getX(), r.getMaxY(), r.getMaxX(), r.getMaxY());
+	}
+
+	private static double[][] getBottom(Rectangle2D r) {
+		return get(r.getX(), r.getY(), r.getMaxX(), r.getY());
+	}
+
+	private static final int resolution = 100;
+
+	private static double[][] get(double x0, double y0, double x1, double y1) {
+		double[][] line = new double[resolution][2];
+		double yInc = (y1 - y0) / (resolution - 1);
+		double xInc = (x1 - x0) / (resolution - 1);
+		for (int i = 0; i < resolution; i++) {
+			line[i][0] = x0 + i * xInc;
+			line[i][1] = y0 + i * yInc;
+		}
+		return line;
 	}
 
 	private static void plot2(double[] x, double[] y1, double[] y2, String title) {
