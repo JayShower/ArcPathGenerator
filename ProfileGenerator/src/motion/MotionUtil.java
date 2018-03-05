@@ -26,8 +26,7 @@ public class MotionUtil {
 	 * @return The new Setpoint at time t.
 	 */
 	public Setpoint getSetpoint(MotionProfile profile, MotionProfileConstraints constraints, MotionProfileGoal goal,
-			MotionState prev_state,
-			double t) {
+			MotionState prev_state, double t) {
 
 		// Sample the profile at time t.
 		Setpoint rv = null;

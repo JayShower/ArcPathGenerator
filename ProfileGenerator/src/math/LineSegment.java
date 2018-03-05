@@ -79,4 +79,9 @@ public class LineSegment implements Curve {
 		return String.format("(%s), (%s)", start.toString(), end.toString());
 	}
 
+	@Override
+	public double getHeadingAtArcLength(double arcLength) {
+		return getDirection().getHeading();
+	}
+
 }

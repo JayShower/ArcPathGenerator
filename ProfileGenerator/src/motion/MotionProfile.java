@@ -113,6 +113,21 @@ public class MotionProfile {
 		return MotionState.kInvalidState;
 	}
 
+	public double velocityByTimeClamped(double t) {
+		if (t < startTime()) {
+			return startState().vel;
+		} else if (t > endTime()) {
+			return endState().vel;
+		}
+		for (MotionSegment s : mSegments) {
+			if (s.containsTime(t)) {
+				return s.getVelocityAtTime(t);
+			}
+		}
+		// Should never get here.
+		return Double.NaN;
+	}
+
 	/**
 	 * Get the interpolated MotionState by distance (the "pos()" field of
 	 * MotionState). Note that since a profile may reverse, this method only returns

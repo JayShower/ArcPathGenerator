@@ -4,25 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.TreeMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-/*
- * Warning: although this class uses multithreading, setResolution SHOULD NOT
- * be called from a thread different than the one using it, because then it could
- * be in the middle of creating the table when trying to access it
- */
-
 public class LookupTable {
 
-	public static final int DEFAULT_SIZE = 250;
-	private static final ExecutorService threadPool = Executors.newWorkStealingPool(); // Executors.newCachedThreadPool();
-	private static final ExecutorService singleThread = Executors.newSingleThreadExecutor();
+	public static final int DEFAULT_SIZE = 150;
 
 	private final BiFunction<Double, Double, Double> deltaY;
 	private final double lowerInput;
@@ -31,7 +19,6 @@ public class LookupTable {
 
 	private int resolution;
 	private double increment;
-	private Future<?> doneChecker;
 	private NavigableMap<Double, Double> inOut;
 	private NavigableMap<Double, Double> outIn;
 
@@ -60,46 +47,24 @@ public class LookupTable {
 	}
 
 	private void makeLUT() {
-		inOut = new ConcurrentSkipListMap<>();
+		inOut = new TreeMap<>();
 		inOut.put(lowerInput, 0.0);
-		outIn = new ConcurrentSkipListMap<>();
+		outIn = new TreeMap<>();
 		outIn.put(0.0, lowerInput);
-
-		List<Future<Double>> puts = new ArrayList<>(resolution);
-		puts.add(threadPool.submit(() -> 0.0));
+		List<Double> puts = new ArrayList<>(resolution);
+		puts.add(0.0);
 
 		for (int i = 1; i < resolution; i++) {
 			int index = i; // need to do this for lambda expression below
 			double prevIn = indexToInput(index - 1);
 			double currentIn = indexToInput(index);
-
-			Future<Double> ds = threadPool.submit(() -> deltaY.apply(prevIn, currentIn));
-
-			Future<Double> putTask = singleThread.submit(() -> {
-				double change = ds.get();
-				double prevResult = puts.get(index - 1).get();
-				double result = prevResult + change;
-				inOut.put(currentIn, result);
-				outIn.put(result, currentIn);
-				return change + prevResult;
-			});
-			puts.add(putTask);
+			double change = deltaY.apply(prevIn, currentIn);
+			double prevResult = puts.get(index - 1);
+			double result = prevResult + change;
+			inOut.put(currentIn, result);
+			outIn.put(result, currentIn);
+			puts.add(result);
 		}
-		doneChecker = puts.get(resolution - 1);
-	}
-
-	public void waitToBeDone() {
-		try {
-			doneChecker.get();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} catch (ExecutionException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public boolean checkIfDone() {
-		return doneChecker.isDone();
 	}
 
 	// private int inputToIndex(double input) {
@@ -107,11 +72,6 @@ public class LookupTable {
 	// }
 
 	public double getOutput(double input) {
-		Double gotVal = inOut.get(input);
-		if (gotVal != null) {
-			return gotVal;
-		}
-
 		Entry<Double, Double> lower = inOut.floorEntry(input);
 		Entry<Double, Double> upper = inOut.ceilingEntry(input);
 
@@ -125,19 +85,14 @@ public class LookupTable {
 			return lower.getValue();
 		}
 
-		Function<Double, Double> f = d -> Util.linearInterpolate(lower.getKey(), lower.getValue(), upper.getKey(),
-				upper.getValue(), d);
+		double mu = (input - lower.getKey()) / (upper.getKey() - lower.getKey());
+		Function<Double, Double> f = d -> Util.lerp(lower.getValue(), upper.getValue(), mu);
 
 		return inOut.computeIfAbsent(input, f);
 	}
 
 	// basically does an interpolation search on the tree
 	public double getInput(double output) {
-		Double gotVal = outIn.get(output);
-		if (gotVal != null) {
-			return gotVal;
-		}
-
 		Entry<Double, Double> lower = outIn.floorEntry(output);
 		Entry<Double, Double> upper = outIn.ceilingEntry(output);
 
@@ -151,15 +106,10 @@ public class LookupTable {
 			return lower.getValue();
 		}
 
-		Function<Double, Double> f = d -> Util.linearInterpolate(lower.getKey(), lower.getValue(), upper.getKey(),
-				upper.getValue(), d);
+		double mu = (output - lower.getKey()) / (upper.getKey() - lower.getKey());
+		Function<Double, Double> f = d -> Util.lerp(lower.getValue(), upper.getValue(), mu);
 
 		return outIn.computeIfAbsent(output, f);
-	}
-
-	public static void closeThreadPools() {
-		threadPool.shutdown();
-		singleThread.shutdown();
 	}
 
 }

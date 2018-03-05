@@ -67,18 +67,17 @@ public final class BezierCurve implements Curve {
 	}
 
 	public double arcLengthIntegral(double lower, double upper) {
-		return Util.gaussQuadIntegrate(this::arcLengthDerivative, lower, upper);
+		return Util.gaussQuadIntegrate64(this::arcLengthDerivative, lower, upper);
 	}
 
-	public void startMakingTable() {
+	public void makeTable() {
 		if (tToArcLengthTable == null) {
 			tToArcLengthTable = new LookupTable(this::arcLengthIntegral, 0, 1);
 		}
 	}
 
 	public LookupTable getTable() {
-		startMakingTable();
-		tToArcLengthTable.waitToBeDone();
+		makeTable();
 		return tToArcLengthTable;
 	}
 
@@ -118,6 +117,15 @@ public final class BezierCurve implements Curve {
 			result += controlPoints[i].toString() + " | ";
 		}
 		return result;
+	}
+
+	private Vector tangent(double t) {
+		return derivative.deCasteljau(t);
+	}
+
+	@Override
+	public double getHeadingAtArcLength(double arcLength) {
+		return tangent(tFromArcLength(arcLength)).getHeading();
 	}
 
 }

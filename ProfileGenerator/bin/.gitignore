@@ -1,4 +1,10 @@
-/pathing/
 /math/
-/plot/
 /motion/
+/pathing/
+/plot/
+/Field$Scale.class
+/Field$Switch.class
+/Field$Zones.class
+/Field.class
+/Test.class
+/org/

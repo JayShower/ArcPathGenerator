@@ -95,8 +95,9 @@ public final class Vector {
 	 * @return rotated vector
 	 */
 	public Vector rotate(double angle) {
-		double newX = x * Math.cos(angle) - y * Math.sin(angle);
-		double newY = x * Math.sin(angle) + y * Math.cos(angle);
+		double sa = Math.sin(angle), ca = Math.cos(angle);
+		double newX = x * ca - y * sa;
+		double newY = x * sa + y * ca;
 		return new Vector(newX, newY);
 	}
 
@@ -108,6 +109,11 @@ public final class Vector {
 
 	public double getAbsoluteAngle() {
 		return Math.atan2(y, x);
+	}
+
+	public double getHeading() {
+		double angle = getAbsoluteAngle();
+		return (-angle) + Math.PI / 2;
 	}
 
 	@Override

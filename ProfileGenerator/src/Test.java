@@ -1,9 +1,12 @@
-package math;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import math.BezierCurve;
+import math.Timer;
+import math.Vector;
 import pathing.Path;
 import pathing.Path.TrajectoryHolder;
 import pathing.Waypoint;
@@ -55,7 +58,6 @@ public class Test {
 		// graphCurvature(curve);
 		// testLUTinvertibility(curve);
 		testPathCreation();
-		LookupTable.closeThreadPools();
 	}
 
 	public static void graphControlPoints(BezierCurve curve) {
@@ -219,27 +221,46 @@ public class Test {
 	}
 
 	public static void testPathCreation() {
-		// System.out.println("CHECK: ");
-		// System.out.println(-Math.PI / 3);
-		// System.out.println(Math.atan2(Math.sin(-Math.PI / 3), Math.cos(-Math.PI /
-		// 3)));
 		Timer t = new Timer();
 		t.reset();
-		double maxV = 25;
-		double maxA = 5;
-		Waypoint a = new Waypoint(5, 5, Math.PI / 2, 0);
-		Waypoint c = new Waypoint(50, 50, 0, maxV);
-		Waypoint d = new Waypoint(100, 50, 0, maxV);
-		Waypoint b = new Waypoint(150, 5, -Math.PI / 2, 0);
-		Path p = new Path(a, true);
-		p.addWaypoints(c, d, b);
-		double dt = 0.01;
-		p.generateProfile(maxV, maxA);
-		TrajectoryHolder sides = p.getTrajectoryPoints(25, dt);
+		double maxVelocity = 25;
+		double maxAcceleration = 5;
+		double robotLength = 36;
+		double robotWidth = 30;
+		double effectiveWidth = 28;
+
+		Path path;
+
+		double startingX = Field.Switch.BOUNDARY.getX() - robotWidth / 2.0 - 5;
+		double startingY = robotLength / 2.0;
+		path = new Path(new Waypoint(startingX, startingY, Math.PI / 2, 0), true);
+
+		double middle1X = Field.Scale.PLATFORM.getX();
+		double middle1Y = Field.Scale.PLATFORM.getY() - robotWidth / 2.0;
+		path.addWaypoint(new Waypoint(middle1X, middle1Y, 0, maxVelocity));
+
+		double middle2X = Field.Scale.PLATFORM.getMaxX();
+		double middle2Y = middle1Y;
+		path.addWaypoint(new Waypoint(middle2X, middle2Y, 0, maxVelocity));
+
+		double endingX = Field.Scale.RIGHT_PLATE.getMaxX() - robotWidth / 2.0;
+		double endingY = Field.Scale.RIGHT_PLATE.getY() - robotLength / 2.0;
+		path.addWaypoint(new Waypoint(endingX, endingY, Math.PI / 2, 0), 0.1);
+
+		// path = new Path(new Waypoint(0, 0, Math.PI / 2, 0), true);
+		// path.addWaypoint(new Waypoint(100, 0, -Math.PI / 2, 0));
+		//
+		// path.generateProfile(maxVelocity * 0.5, maxAcceleration * 0.5);
+
+		System.out.println(Arrays.toString(path.getSegments()));
+
+		double dt = 0.02;
+		path.generateProfile(maxVelocity, maxAcceleration);
+		TrajectoryHolder sides = path.getTrajectoryPoints(effectiveWidth, dt);
 		t.printElapsed("Time to make: ");
-		System.out.println("TIME: " + p.getProfile().duration());
-		System.out.println("LENGTH: " + p.getProfile().endPos());
-		Graphing.graphMyPath(p, sides, dt);
+		System.out.println("TIME: " + path.getProfile().duration());
+		System.out.println("LENGTH: " + path.getProfile().endPos());
+		Graphing.graphMyPath(path, sides, dt);
 	}
 
 	public static void main(String[] args) {

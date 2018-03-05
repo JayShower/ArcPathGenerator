@@ -1,6 +1,7 @@
 package plot;
 
 import java.awt.Color;
+import java.util.Arrays;
 
 import math.Util;
 import pathing.Path;
@@ -43,7 +44,7 @@ public class Graphing {
 			rightAcc[i] = sides.right[i].acceleration;
 			x[i] = sides.left[i].x;
 			y[i] = sides.left[i].y;
-			// System.out.println(x[i] + ", " + y[i]);
+			System.out.println(x[i] + ", " + y[i]);
 			// Vector v2 = curve.getPointAtArcLength(pos);
 			// System.out.println(v2.x + ", " + v2.y);
 			curvatures[i] = center.getSegments()[currentSegment].curve.getCurvatureAtArcLength(
@@ -52,16 +53,19 @@ public class Graphing {
 		System.out.println("X is increasing: " + Util.isIncreasing(x));
 		System.out.println("Y is increasing: " + Util.isIncreasing(y));
 		plot1(x, y, "My X vs Y");
-		plot2(times, leftPos, rightPos, "My Pos vs Time, L=B,R=R");
-		plot3(times, leftVel, rightVel, curvatures, "My Vel vs Time, L=B,R=R");
-		plot2(times, leftAcc, rightAcc, "My Acc vs Time, L=B,R=R");
+		// plot2(times, leftPos, rightPos, "My Pos vs Time, L=B,R=R");
+		// plot3(times, leftVel, rightVel, curvatures, "My Vel vs Time, L=B,R=R");
+		// plot2(times, leftAcc, rightAcc, "My Acc vs Time, L=B,R=R");
 	}
 
 	private static void plot1(double[] x, double[] y1, String title) {
 		FalconLinePlot fig2 = new FalconLinePlot(x, y1, Color.BLUE, Color.BLUE);
 		fig2.yGridOn();
 		fig2.xGridOn();
-		// fig2.setMaxMin(0, 200, 0, 200);
+		double maxX = Arrays.stream(x).max().getAsDouble();
+		double maxY = Arrays.stream(y1).max().getAsDouble();
+		double max = Math.max(maxX, maxY);
+		fig2.setMaxMin(0, max, 0, max);
 		fig2.setTitle(title);
 	}
 

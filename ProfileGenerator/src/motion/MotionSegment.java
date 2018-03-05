@@ -1,5 +1,7 @@
 package motion;
 
+import math.Util;
+
 /**
  * A MotionSegment is a movement from a start MotionState to an end MotionState
  * with a constant acceleration.
@@ -34,8 +36,7 @@ public class MotionSegment {
 				&& !MotionUtil.epsilonEquals(start().vel(), 0.0, MotionUtil.kEpsilon)
 				&& !MotionUtil.epsilonEquals(end().vel(), 0.0, MotionUtil.kEpsilon)) {
 			// Velocity direction reverses within the segment.
-			System.err.println(
-					"Segment velocity reverses! Start vel: " + start().vel() + ", End vel: " + end().vel());
+			System.err.println("Segment velocity reverses! Start vel: " + start().vel() + ", End vel: " + end().vel());
 			return false;
 		}
 		if (!start().extrapolate(end().t()).equals(end())) {
@@ -72,6 +73,11 @@ public class MotionSegment {
 
 	public void setEnd(MotionState end) {
 		mEnd = end;
+	}
+
+	public double getVelocityAtTime(double t) {
+		double mu = (t - mStart.t) / (mEnd.t - mStart.t);
+		return Util.cerp(mStart.vel, mEnd.vel, mu);
 	}
 
 	@Override

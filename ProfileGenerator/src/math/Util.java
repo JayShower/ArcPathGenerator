@@ -4,7 +4,7 @@ import java.util.function.Function;
 
 public class Util {
 
-	private static final double[][] gaussQuad = { { 0.0486909570091397, -0.0243502926634244 },
+	private static final double[][] gaussQuad64 = { { 0.0486909570091397, -0.0243502926634244 },
 			{ 0.0486909570091397, 0.0243502926634244 }, { 0.0485754674415034, -0.072993121787799 },
 			{ 0.0485754674415034, 0.072993121787799 }, { 0.048344762234803, -0.121462819296121 },
 			{ 0.048344762234803, 0.121462819296121 }, { 0.0479993885964583, -0.169644420423993 },
@@ -38,6 +38,12 @@ public class Util {
 			{ 0.0041470332605625, 0.996340116771955 }, { 0.0017832807216964, -0.999305041735772 },
 			{ 0.0017832807216964, 0.999305041735772 } };
 
+	private static final double[][] gaussQuad8 = { { 0.3626837833783620, -0.1834346424956498 },
+			{ 0.3626837833783620, 0.1834346424956498 }, { 0.3137066458778873, -0.5255324099163290 },
+			{ 0.3137066458778873, 0.5255324099163290 }, { 0.2223810344533745, -0.7966664774136267 },
+			{ 0.2223810344533745, 0.7966664774136267 }, { 0.1012285362903763, -0.9602898564975363 },
+			{ 0.1012285362903763, 0.9602898564975363 } };
+
 	/**
 	 * Integrates function from 0 to z
 	 * 
@@ -47,27 +53,32 @@ public class Util {
 	 *            lower limit of integration
 	 * @param upper
 	 *            upper limit of integration
-	 * @param rectangles
-	 *            number of rectangles to use, at most 64
 	 * @return the approximate integral
 	 */
-	public static double gaussQuadIntegrate(Function<Double, Double> function, double lower, double upper) {
+	public static double gaussQuadIntegrate64(Function<Double, Double> function, double lower, double upper) {
 		if (upper - lower == 0)
 			return 0;
 		double sum = 0;
-		for (int i = 0; i < gaussQuad.length; i++) {
-			double input = (upper - lower) * gaussQuad[i][1] / 2 + (upper + lower) / 2;
-			sum += gaussQuad[i][0] * function.apply(input);
+		for (int i = 0; i < gaussQuad64.length; i++) {
+			double input = (upper - lower) * gaussQuad64[i][1] / 2 + (upper + lower) / 2;
+			sum += gaussQuad64[i][0] * function.apply(input);
+		}
+		return sum * (upper - lower) / 2;
+	}
+
+	public static double gaussQuadIntegrate8(Function<Double, Double> function, double lower, double upper) {
+		if (upper - lower == 0)
+			return 0;
+		double sum = 0;
+		for (int i = 0; i < gaussQuad8.length; i++) {
+			double input = (upper - lower) * gaussQuad8[i][1] / 2 + (upper + lower) / 2;
+			sum += gaussQuad8[i][0] * function.apply(input);
 		}
 		return sum * (upper - lower) / 2;
 	}
 
 	public static double limit(double d, double min, double max) {
-		if (d < min)
-			return min;
-		if (d > max)
-			return max;
-		return d;
+		return d < min ? min : d > max ? max : d;
 	}
 
 	public static boolean epsilonEquals(double v1, double v2, double epsilon) {
@@ -103,6 +114,22 @@ public class Util {
 				return false;
 		}
 		return true;
+	}
+
+	public static double lerp(double low, double high, double mu) {
+		return (high - low) * mu + low;
+	}
+
+	public static double cerp(double y1, double y2, double mu) {
+		double mu2 = (1 - Math.cos(mu * Math.PI)) / 2;
+		return (y1 * (1 - mu2)) + (y2 * mu2);
+	}
+	
+	public static void logForGraphing(Object... obs) {
+		for(Object o : obs) {
+			System.out.print(o + ", ");
+		}
+		System.out.println();
 	}
 
 }
